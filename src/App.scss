@@ -1,43 +1,108 @@
+* {
+    user-select: none;
+}
+
+*:focus {
+    outline: none;
+}
+
 .scoreboard {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 50%;
     background-color: blue;
     border-radius: 7px;
     padding-left: 1rem;
     padding-right: 1rem;
 }
 
-.scoreboard div {
+.topPart {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.topPart div {
     margin-left: 0.3rem;
     margin-right: 0.3rem;
 }
 
-.scoreboard ul {
+.topPart ul {
     list-style-type: none;
     padding: 0;
     margin-left: 5px;
+}
+
+.middlePart {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.middlePart div {
+    margin-left: 0.3rem;
+    margin-right: 0.3rem;
+}
+
+.middlePart ul {
+    list-style-type: none;
+    padding: 0;
+    margin-left: 5px;
+}
+
+.middlePart li {
+    margin-bottom: 0.2rem;
+}
+
+.middlePart input[type="checkbox"] {
+    margin-right: 0.2rem;
+    height: 0.9rem;
+    width: 0.9rem;
+    border-radius: 0.35rem;
+}
+
+.middlePart button {
+    height: 0.6rem;
+    width: 0.5rem;
+    padding: 0;
+}
+
+.troughText {
+    margin-top: 0;
+    padding-top: 0;
+    width: 1rem;
+    text-align: end;
+    overflow: hidden;
+}
+
+.descriptionText {
+    margin-top: 0;
+    padding-top: 0;
+    width: 4.3rem;
+    text-align: end;
+    overflow: hidden;
+}
+
+.robotStatus {
+    background-color: white;
+    border-radius: 3px;
+    
+    padding-top: 0.1rem;
+    padding-bottom: 0.1rem;
+    padding-left: 0.2rem;
+    padding-right: 0.2rem;
 }
 
 .auto {
     display: flex;
     flex-direction: row;
     align-items: center;
-    background-color: green;
 }
 
 .endgame {
     display: flex;
     flex-direction: row;
     align-items: center;
-    background-color: green;
-}
-
-.bonuses {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    background-color: green;
 }
