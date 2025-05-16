@@ -13,8 +13,8 @@ export default function App() {
     const [adjust, setAdjust] = useState(0);
 
     useEffect(() => {
-        const more = document.getElementById("more");
-        const less = document.getElementById("less");
+        const more = document.getElementById("moreTroughCorals");
+        const less = document.getElementById("lessTroughCorals");
 
         const incrementTroughCorals = () => setTroughCorals((prev) => prev + 1 < 99 ? prev + 1 : 99); // max 99
         const decrementTroughCorals = () => setTroughCorals((prev) => prev - 1 > 0 ? prev - 1 : 0); // min 0
