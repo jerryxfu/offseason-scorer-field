@@ -130,6 +130,7 @@ export default function App() {
                             </select>
                         </div>
                     </div>
+                    <hr className="autoToEndgame"/>
                     <div className="endgame">
                         <div>
                             <p><b>Endgame</b></p>
@@ -140,9 +141,9 @@ export default function App() {
                             </ul>
                         </div>
 
-                        <div> 
-                            <br/>
-                            <select id="barge_1" style={{marginTop: "14px"}}>
+                        <div>
+                            <p style={{marginTop: "6px", marginBottom: "7px"}}>Barge Position</p>
+                            <select id="barge_1">
                                 <option value="Unknown">Unknown</option>
                                 <option value="None">None</option>
                                 <option value="Parked">Parked</option>
@@ -168,17 +169,18 @@ export default function App() {
                         </div>
                     </div>
                 </div>
+                <hr className="topToMiddle"/>
                 <div className="middlePart">
                     <div style={{height: "7rem"}}>
-                        <ul style={{marginTop: "rem"}}>
-                            <li>High Branch</li>
-                            <li>Middle Branch</li>
-                            <li>Low Branch</li>
+                        <ul style={{marginTop: "0.05rem"}}>
+                            <li style={{marginBottom: "0.475rem"}}>High Branch</li>
+                            <li style={{marginBottom: "0.475rem"}}>Middle Branch</li>
+                            <li style={{marginBottom: "0.6rem"}}>Low Branch</li>
                             <li>Trough</li>
                         </ul>
                     </div>
                     <div>
-                        &nbsp;A &nbsp;&nbsp;B &nbsp;&nbsp;C &nbsp;&nbsp;D &nbsp;E &nbsp;&nbsp;F &nbsp;&nbsp;G &nbsp;&nbsp;H &nbsp;&nbsp;I &nbsp;&nbsp;&nbsp;J &nbsp;&nbsp;K &nbsp;&nbsp;L
+                        &nbsp;&nbsp;A &nbsp;&nbsp;&nbsp;B &nbsp;&nbsp;&nbsp;C &nbsp;&nbsp;&nbsp;D &nbsp;&nbsp;&nbsp;E &nbsp;&nbsp;&nbsp;F &nbsp;&nbsp;&nbsp;G &nbsp;&nbsp;&nbsp;H &nbsp;&nbsp;&nbsp;I &nbsp;&nbsp;&nbsp;&nbsp;J &nbsp;&nbsp;&nbsp;&nbsp;K &nbsp;&nbsp;&nbsp;L
                         <br/>
                         <input type="checkbox"></input>
                         <input type="checkbox"></input>
@@ -244,9 +246,6 @@ export default function App() {
                             </div>
                         </div>
                     </div>
-                </div>
-                <div className="robotStatus">
-                    Teleop
                 </div>
             </div>
         </div>
