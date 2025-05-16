@@ -7,13 +7,23 @@
 }
 
 .topToMiddle {
-    width: 30rem;
+    width: 40rem;
     border: 1.5px solid black;
     border-color: black;
     padding: 0;
     border-radius: 3px;
     margin-top: 0.1rem;
     margin-bottom: 0.7rem;
+}
+
+.middleToBottom {
+    width: 40rem;
+    border: 1.5px solid black;
+    border-color: black;
+    padding: 0;
+    border-radius: 3px;
+    margin-top: 0.7em;
+    margin-bottom: 0.9rem;
 }
 
 .autoToEndgame {
@@ -27,12 +37,23 @@
     margin-right: 0.5rem;
 }
 
+.penaltiesToFouls {
+    height: 7.75rem;
+    border: 1.5px solid black;
+    border-color: black;
+    padding: 0;
+    border-radius: 3px;
+    margin-top: 0.4rem;
+    margin-left: 0.7rem;
+    margin-right: 0.7rem;
+}
+
 .scoreboard {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background-color: blue;
+    background-color: #0077ff;
     border-radius: 7px;
     padding-left: 1rem;
     padding-right: 1rem;
@@ -100,6 +121,68 @@
     padding: 0;
 }
 
+.bottomPart {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.bottomPart div {
+    margin-left: 0.3rem;
+    margin-right: 0.3rem;
+}
+
+.bottomPart ul {
+    list-style-type: none;
+    padding: 0;
+    margin-left: 5px;
+    margin-bottom: 0;
+}
+
+.bottomPart li {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.bottomPart p {
+    margin-top: 0;
+}
+
+.penalties {
+    width: 13rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.penalties input[type="checkbox"] {
+    height: 0.9rem;
+    width: 0.9rem;
+    padding: 0;
+    margin-bottom: 0;
+    margin-top: 0;
+}
+
+.fouls {
+    width: 13rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0;
+    margin-bottom: 0;
+}
+
+.fouls li {
+    display: flex;
+    flex-direction: row;
+}
+
+.fouls button {
+    height: 0.8rem;
+    width: 0.6rem;
+    padding: 0;
+}
+
 .troughText {
     margin-top: 0;
     padding-top: 0;
@@ -109,22 +192,22 @@
     font-size: 1.75rem;
 }
 
+.foulsText {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    width: 1rem;
+    text-align: end;
+    overflow: hidden;
+    font-size: 1.2rem;
+}
+
 .descriptionText {
     margin-top: 0.4rem;
     padding-top: 0;
     width: 4.3rem;
     text-align: end;
     overflow: hidden;
-}
-
-.robotStatus {
-    background-color: white;
-    border-radius: 3px;
-    
-    padding-top: 0.1rem;
-    padding-bottom: 0.1rem;
-    padding-left: 0.2rem;
-    padding-right: 0.2rem;
 }
 
 .auto {

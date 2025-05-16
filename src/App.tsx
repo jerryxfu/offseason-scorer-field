@@ -4,66 +4,132 @@ import "./App.scss";
 
 export default function App() {
     const [connected, setConnected] = useState(false);
+
     const [troughCorals, setTroughCorals] = useState(0);
     const [processorAlgae, setProcessorAlgae] = useState(0);
     const [netAlgae, setNetAlgae] = useState(0);
+    const [minorFouls, setMinorFouls] = useState(0);
+    const [majorFouls, setMajorFouls] = useState(0);
+    const [adjust, setAdjust] = useState(0);
 
     useEffect(() => {
-        const moreTroughCorals = document.getElementById("moreTroughCorals");
-        const lessTroughCorals = document.getElementById("lessTroughCorals");
+        const more = document.getElementById("more");
+        const less = document.getElementById("less");
 
         const incrementTroughCorals = () => setTroughCorals((prev) => prev + 1 < 99 ? prev + 1 : 99); // max 99
         const decrementTroughCorals = () => setTroughCorals((prev) => prev - 1 > 0 ? prev - 1 : 0); // min 0
 
-        if (moreTroughCorals && lessTroughCorals) {
-            moreTroughCorals.addEventListener("click", incrementTroughCorals);
-            lessTroughCorals.addEventListener("click", decrementTroughCorals);
+        if (more && less) {
+            more.addEventListener("click", incrementTroughCorals);
+            less.addEventListener("click", decrementTroughCorals);
         }
 
         return () => {
-            if (moreTroughCorals && lessTroughCorals) {
-                moreTroughCorals.removeEventListener("click", incrementTroughCorals);
-                lessTroughCorals.removeEventListener("click", decrementTroughCorals);
-            }
-        };
-    }, []);
-
-        useEffect(() => {
-        const moreTroughCorals = document.getElementById("moreProcessorAlgae");
-        const lessTroughCorals = document.getElementById("lessProcessorAlgae");
-
-        const incrementProcessorAlgae = () => setProcessorAlgae((prev) => prev + 1 < 99 ? prev + 1 : 99); // max 99
-        const decrementProcessorAlgae = () => setProcessorAlgae((prev) => prev - 1 > 0 ? prev - 1 : 0); // min 0
-
-        if (moreTroughCorals && lessTroughCorals) {
-            moreTroughCorals.addEventListener("click", incrementProcessorAlgae);
-            lessTroughCorals.addEventListener("click", decrementProcessorAlgae);
-        }
-
-        return () => {
-            if (moreTroughCorals && lessTroughCorals) {
-                moreTroughCorals.removeEventListener("click", incrementProcessorAlgae);
-                lessTroughCorals.removeEventListener("click", decrementProcessorAlgae);
+            if (more && less) {
+                more.removeEventListener("click", incrementTroughCorals);
+                less.removeEventListener("click", decrementTroughCorals);
             }
         };
     }, []);
 
     useEffect(() => {
-        const moreTroughCorals = document.getElementById("moreNetAlgae");
-        const lessTroughCorals = document.getElementById("lessNetAlgae");
+        const more = document.getElementById("moreProcessorAlgae");
+        const less = document.getElementById("lessProcessorAlgae");
+
+        const incrementProcessorAlgae = () => setProcessorAlgae((prev) => prev + 1 < 99 ? prev + 1 : 99); // max 99
+        const decrementProcessorAlgae = () => setProcessorAlgae((prev) => prev - 1 > 0 ? prev - 1 : 0); // min 0
+
+        if (more && less) {
+            more.addEventListener("click", incrementProcessorAlgae);
+            less.addEventListener("click", decrementProcessorAlgae);
+        }
+
+        return () => {
+            if (more && less) {
+                more.removeEventListener("click", incrementProcessorAlgae);
+                less.removeEventListener("click", decrementProcessorAlgae);
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        const more = document.getElementById("moreNetAlgae");
+        const less = document.getElementById("lessNetAlgae");
 
         const incrementNetAlgae = () => setNetAlgae((prev) => prev + 1 < 99 ? prev + 1 : 99); // max 99
         const decrementNetAlgae = () => setNetAlgae((prev) => prev - 1 > 0 ? prev - 1 : 0); // min 0
 
-        if (moreTroughCorals && lessTroughCorals) {
-            moreTroughCorals.addEventListener("click", incrementNetAlgae);
-            lessTroughCorals.addEventListener("click", decrementNetAlgae);
+        if (more && less) {
+            more.addEventListener("click", incrementNetAlgae);
+            less.addEventListener("click", decrementNetAlgae);
         }
 
         return () => {
-            if (moreTroughCorals && lessTroughCorals) {
-                moreTroughCorals.removeEventListener("click", incrementNetAlgae);
-                lessTroughCorals.removeEventListener("click", decrementNetAlgae);
+            if (more && less) {
+                more.removeEventListener("click", incrementNetAlgae);
+                less.removeEventListener("click", decrementNetAlgae);
+            }
+        };
+    }, []);
+
+    // Fouls
+
+    useEffect(() => {
+        const more = document.getElementById("moreMinorFouls");
+        const less = document.getElementById("lessMinorFouls");
+
+        const incrementMinorFouls = () => setMinorFouls((prev) => prev + 1 < 99 ? prev + 1 : 99); // max 99
+        const decrementMinorFouls = () => setMinorFouls((prev) => prev - 1 > 0 ? prev - 1 : 0); // min 0
+
+        if (more && less) {
+            more.addEventListener("click", incrementMinorFouls);
+            less.addEventListener("click", decrementMinorFouls);
+        }
+
+        return () => {
+            if (more && less) {
+                more.removeEventListener("click", incrementMinorFouls);
+                less.removeEventListener("click", decrementMinorFouls);
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        const more = document.getElementById("moreMajorFouls");
+        const less = document.getElementById("lessMajorFouls");
+
+        const incrementMajorFouls = () => setMajorFouls((prev) => prev + 1 < 99 ? prev + 1 : 99); // max 99
+        const decrementMajorFouls = () => setMajorFouls((prev) => prev - 1 > 0 ? prev - 1 : 0); // min 0
+
+        if (more && less) {
+            more.addEventListener("click", incrementMajorFouls);
+            less.addEventListener("click", decrementMajorFouls);
+        }
+
+        return () => {
+            if (more && less) {
+                more.removeEventListener("click", incrementMajorFouls);
+                less.removeEventListener("click", decrementMajorFouls);
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        const more = document.getElementById("moreAdjust");
+        const less = document.getElementById("lessAdjust");
+
+        const incrementAdjust = () => setAdjust((prev) => prev + 1 < 99 ? prev + 1 : 99); // max 99
+        const decrementAdjust = () => setAdjust((prev) => prev - 1 > 0 ? prev - 1 : 0); // min 0
+
+        if (more && less) {
+            more.addEventListener("click", incrementAdjust);
+            less.addEventListener("click", decrementAdjust);
+        }
+
+        return () => {
+            if (more && less) {
+                more.removeEventListener("click", incrementAdjust);
+                less.removeEventListener("click", decrementAdjust);
             }
         };
     }, []);
@@ -173,9 +239,9 @@ export default function App() {
                 <div className="middlePart">
                     <div style={{height: "7rem"}}>
                         <ul style={{marginTop: "0.05rem"}}>
-                            <li style={{marginBottom: "0.475rem"}}>High Branch</li>
+                            <li style={{marginBottom: "0.475rem", marginTop: "0.9rem"}}>High Branch</li>
                             <li style={{marginBottom: "0.475rem"}}>Middle Branch</li>
-                            <li style={{marginBottom: "0.6rem"}}>Low Branch</li>
+                            <li style={{marginBottom: "0.7rem"}}>Low Branch</li>
                             <li>Trough</li>
                         </ul>
                     </div>
@@ -221,8 +287,8 @@ export default function App() {
                         <input type="checkbox"></input>
                         <input type="checkbox"></input>
                         <br/>
-                        <div style={{display: "flex", flexDirection: "row"}}>
-                            <p className="troughText">{troughCorals}</p>
+                        <div style={{display: "flex", flexDirection: "row",}}>
+                            <p className="troughText" style={{marginBottom:"0"}}>{troughCorals}</p>
                             <div style={{display: "flex", flexDirection: "column", height: "2rem"}}>
                                 <button id="moreTroughCorals" style={{marginBottom: "0.05rem"}}></button>
                                 <button id="lessTroughCorals"></button>
@@ -244,6 +310,62 @@ export default function App() {
                                 <button id="moreNetAlgae" style={{marginBottom: "0.05rem"}}></button>
                                 <button id="lessNetAlgae"></button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+                <hr className="middleToBottom"/>
+                <div className="bottomPart">
+                    <div className="penalties">
+                        <div>
+                            <p><b>Penalties against Blue</b></p>
+                            <ul>
+                                <li>G206</li>
+                                <li>G410 to Red</li>
+                                <li>G418 to Red</li>
+                                <li>G419 to Red</li>
+                                <li>G428 to Red</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <br/>
+                            <br/>
+                            <input type="checkbox" style={{marginTop: "0.2rem"}}></input> <br/>
+                            <input type="checkbox"></input> <br/>
+                            <input type="checkbox"></input> <br/>
+                            <input type="checkbox"></input> <br/>
+                            <input type="checkbox"></input> <br/>
+                        </div>
+                    </div>
+                    <hr className="penaltiesToFouls"/>
+                    <div className="fouls">
+                        <div>
+                            <p style={{marginTop: "0.35rem"}}><b>Foul Points</b></p>
+                            <ul>
+                                <li><p style={{marginTop: "0.2rem", marginBottom: "0", width: "5rem"}}>Minor Foul</p>
+                                    <div style={{display: "flex", flexDirection: "row"}}>
+                                        <p className="foulsText" style={{marginTop: "0.1rem"}}>{minorFouls}</p>
+                                        <div style={{display: "flex", flexDirection: "column", height: "2rem"}}>
+                                            <button id="moreMinorFouls" style={{marginBottom: "0.05rem"}}></button>
+                                            <button id="lessMinorFouls"></button>
+                                    </div></div>
+                                </li>
+                                <li><p style={{marginTop: "0.2rem", marginBottom: "0", width: "5rem"}}>Major Foul</p>
+                                    <div style={{display: "flex", flexDirection: "row"}}>
+                                        <p className="foulsText" style={{marginTop: "0.1rem"}}>{majorFouls}</p>
+                                        <div style={{display: "flex", flexDirection: "column", height: "2rem"}}>
+                                            <button id="moreMajorFouls" style={{marginBottom: "0.05rem"}}></button>
+                                            <button id="lessMajorFouls"></button>
+                                    </div></div>
+                                </li>
+                                <li><p style={{marginTop: "0.2rem", marginBottom: "0", width: "5rem"}}>Adjust</p>
+                                    <div style={{display: "flex", flexDirection: "row", marginBottom: "0"}}>
+                                        <p className="foulsText" style={{marginTop: "0.1rem", marginBottom: "0"}}>{adjust}</p>
+                                        <div style={{display: "flex", flexDirection: "column", height: "2rem"}}>
+                                            <button id="moreAdjust" style={{marginBottom: "0.05rem"}}></button>
+                                            <button id="lessAdjust"></button>
+                                    </div></div>
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </div>
