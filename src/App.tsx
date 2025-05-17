@@ -30,8 +30,8 @@ export default function App() {
 
     return (
         <div>
+            <p>Status: {connected ? "Connected 🟢" : "Disconnected 🔴"}</p>
             <h1>Scorer</h1>
-            <p>Status: {connected ? "Connected" : "Disconnected"}</p>
             <button onClick={sendScore}>+5 Blue</button>
         </div>
     );

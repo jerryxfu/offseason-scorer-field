@@ -6,11 +6,15 @@ export interface ServerToClientEvents {
     "match:start": () => void;
     "match:end": () => void;
     "match:reset": () => void;
+    "score:add": (data: { alliance: "red" | "blue"; points: number }) => void;
+    "score:remove": (data: { alliance: "red" | "blue"; points: number }) => void;
+    "score:set": (data: { alliance: "red" | "blue"; points: number }) => void;
+    "score:reset": (data: { alliance: "red" | "blue" }) => void;
 }
 
 export interface ClientToServerEvents {
     "score:add": (data: { alliance: "red" | "blue"; points: number }) => void;
-    "score:penalty": (data: { alliance: "red" | "blue"; points: number }) => void;
+    "score:remove": (data: { alliance: "red" | "blue"; points: number }) => void;
 }
 
-export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io("http://localhost:3000");
+export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io("http://192.168.83.66:3000");
