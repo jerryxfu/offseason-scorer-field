@@ -1,138 +1,83 @@
 import {useEffect, useState} from "react";
 import {socket} from "./socket";
 import "./App.scss";
+import StatusBar from "./components/statusbar/StatusBar.tsx";
+import PlusMinusButton from "./components/plusminusbutton/PlusMinusButton.tsx";
 
 export default function App() {
     const [connected, setConnected] = useState(false);
+    const AUTO_LEAVE_OPTIONS = ["Unknown", "Yes", "No"];
+    const ENDGAME_OPTIONS = ["Unknown", "DeepCage", "ShallowCage", "Parked", "None"];
+    const BRANCHES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
+    const PENALTIES = ["G206", "G410", "G418", "G419", "G428"];
+    const FOULS = ["Minor", "Major", "Adjustment"] as const;
+    const LEVELS = ["L4", "L3", "L2"];
 
-    const [troughCorals, setTroughCorals] = useState(0);
-    const [processorAlgae, setProcessorAlgae] = useState(0);
-    const [netAlgae, setNetAlgae] = useState(0);
-    const [minorFouls, setMinorFouls] = useState(0);
-    const [majorFouls, setMajorFouls] = useState(0);
-    const [adjust, setAdjust] = useState(0);
+    const [netCount, setNetCount] = useState(0);
+    const [processorCount, setProcessorCount] = useState(0);
+    const [throughCount, setThroughCount] = useState(0);
 
-    useEffect(() => {
-        const more = document.getElementById("moreTroughCorals");
-        const less = document.getElementById("lessTroughCorals");
+    type FoulType = typeof FOULS[number];
+    type ScoringType = "Net" | "Processor" | "Through";
 
-        const incrementTroughCorals = () => setTroughCorals((prev) => prev + 1 < 99 ? prev + 1 : 99); // max 99
-        const decrementTroughCorals = () => setTroughCorals((prev) => prev - 1 > 0 ? prev - 1 : 0); // min 0
-
-        if (more && less) {
-            more.addEventListener("click", incrementTroughCorals);
-            less.addEventListener("click", decrementTroughCorals);
+    const scoringHandlers: Record<ScoringType, { onPlus: () => void; onMinus: () => void; }> = {
+        Net: {
+            onPlus: () => {
+                setNetCount((c) => c + 1);
+            },
+            onMinus: () => {
+                setNetCount((c) => Math.max(0, c - 1));
+            },
+        },
+        Processor: {
+            onPlus: () => {
+                setProcessorCount((c) => c + 1);
+            },
+            onMinus: () => {
+                setProcessorCount((c) => Math.max(0, c - 1)
+                );
+            },
+        },
+        Through: {
+            onPlus: () => {
+                setThroughCount((c) => c + 1);
+            },
+            onMinus: () => {
+                setThroughCount((c) => Math.max(0, c - 1));
+            },
         }
+    };
 
-        return () => {
-            if (more && less) {
-                more.removeEventListener("click", incrementTroughCorals);
-                less.removeEventListener("click", decrementTroughCorals);
-            }
-        };
-    }, []);
+    const [minorFoulCount, setMinorFoulCount] = useState(0);
+    const [majorFoulCount, setMajorFoulCount] = useState(0);
+    const [adjustmentFoulCount, setAdjustmentFoulCount] = useState(0);
 
-    useEffect(() => {
-        const more = document.getElementById("moreProcessorAlgae");
-        const less = document.getElementById("lessProcessorAlgae");
-
-        const incrementProcessorAlgae = () => setProcessorAlgae((prev) => prev + 1 < 99 ? prev + 1 : 99); // max 99
-        const decrementProcessorAlgae = () => setProcessorAlgae((prev) => prev - 1 > 0 ? prev - 1 : 0); // min 0
-
-        if (more && less) {
-            more.addEventListener("click", incrementProcessorAlgae);
-            less.addEventListener("click", decrementProcessorAlgae);
-        }
-
-        return () => {
-            if (more && less) {
-                more.removeEventListener("click", incrementProcessorAlgae);
-                less.removeEventListener("click", decrementProcessorAlgae);
-            }
-        };
-    }, []);
-
-    useEffect(() => {
-        const more = document.getElementById("moreNetAlgae");
-        const less = document.getElementById("lessNetAlgae");
-
-        const incrementNetAlgae = () => setNetAlgae((prev) => prev + 1 < 99 ? prev + 1 : 99); // max 99
-        const decrementNetAlgae = () => setNetAlgae((prev) => prev - 1 > 0 ? prev - 1 : 0); // min 0
-
-        if (more && less) {
-            more.addEventListener("click", incrementNetAlgae);
-            less.addEventListener("click", decrementNetAlgae);
-        }
-
-        return () => {
-            if (more && less) {
-                more.removeEventListener("click", incrementNetAlgae);
-                less.removeEventListener("click", decrementNetAlgae);
-            }
-        };
-    }, []);
-
-    // Fouls
-
-    useEffect(() => {
-        const more = document.getElementById("moreMinorFouls");
-        const less = document.getElementById("lessMinorFouls");
-
-        const incrementMinorFouls = () => setMinorFouls((prev) => prev + 1 < 99 ? prev + 1 : 99); // max 99
-        const decrementMinorFouls = () => setMinorFouls((prev) => prev - 1 > 0 ? prev - 1 : 0); // min 0
-
-        if (more && less) {
-            more.addEventListener("click", incrementMinorFouls);
-            less.addEventListener("click", decrementMinorFouls);
-        }
-
-        return () => {
-            if (more && less) {
-                more.removeEventListener("click", incrementMinorFouls);
-                less.removeEventListener("click", decrementMinorFouls);
-            }
-        };
-    }, []);
-
-    useEffect(() => {
-        const more = document.getElementById("moreMajorFouls");
-        const less = document.getElementById("lessMajorFouls");
-
-        const incrementMajorFouls = () => setMajorFouls((prev) => prev + 1 < 99 ? prev + 1 : 99); // max 99
-        const decrementMajorFouls = () => setMajorFouls((prev) => prev - 1 > 0 ? prev - 1 : 0); // min 0
-
-        if (more && less) {
-            more.addEventListener("click", incrementMajorFouls);
-            less.addEventListener("click", decrementMajorFouls);
-        }
-
-        return () => {
-            if (more && less) {
-                more.removeEventListener("click", incrementMajorFouls);
-                less.removeEventListener("click", decrementMajorFouls);
-            }
-        };
-    }, []);
-
-    useEffect(() => {
-        const more = document.getElementById("moreAdjust");
-        const less = document.getElementById("lessAdjust");
-
-        const incrementAdjust = () => setAdjust((prev) => prev + 1 < 99 ? prev + 1 : 99); // max 99
-        const decrementAdjust = () => setAdjust((prev) => prev - 1 > 0 ? prev - 1 : 0); // min 0
-
-        if (more && less) {
-            more.addEventListener("click", incrementAdjust);
-            less.addEventListener("click", decrementAdjust);
-        }
-
-        return () => {
-            if (more && less) {
-                more.removeEventListener("click", incrementAdjust);
-                less.removeEventListener("click", decrementAdjust);
-            }
-        };
-    }, []);
+    const foulHandlers: Record<FoulType, { onPlus: () => void; onMinus: () => void; }> = {
+        Minor: {
+            onPlus: () => {
+                setMinorFoulCount((c) => c + 1);
+            },
+            onMinus: () => {
+                setMinorFoulCount((c) => Math.max(0, c - 1));
+            },
+        },
+        Major: {
+            onPlus: () => {
+                setMajorFoulCount((c) => c + 1);
+            },
+            onMinus: () => {
+                setMajorFoulCount((c) => Math.max(0, c - 1));
+            },
+        },
+        Adjustment: {
+            onPlus: () => {
+                setAdjustmentFoulCount((c) => c + 1);
+            },
+            onMinus: () => {
+                setAdjustmentFoulCount((c) => Math.max(0, c - 1));
+            },
+        },
+    };
 
     useEffect(() => {
         socket.on("connect", () => {
@@ -158,218 +103,195 @@ export default function App() {
         socket.emit("score:add", {alliance: "blue", points: 5});
     };
 
-    return (
-        <div>
-            <p>Status: {connected ? "Connected 🟢" : "Disconnected 🔴"}</p>
-            <h1>Scorer</h1>
-            <button onClick={sendScore}>+5 Blue</button>
-            <div className="scoreboard">
-                <div className="topPart">
-                    <div className="auto">
-                        <div>
-                            <p><b>Auto</b></p>
-                            <ul>
-                                <li>1</li>
-                                <li>2</li>
-                                <li>3</li>
-                            </ul>
-                        </div>
+    return (<div>
+        <StatusBar status={connected ? "Connected 🟢" : "Disconnected 🔴"} alliance={"RED"} matchStatus={"hold"} />
 
-                        <div style={{marginLeft: "30px"}}>
-                            <p style={{marginTop: "6px", marginBottom: "7px"}}>Leave</p>
-                            <select id="leave_1">
-                                <option value="Unknown">Unknown</option>
-                                <option value="No">No</option>
-                                <option value="Yes">Yes</option>
-                            </select>
-                            <br/>
-                            <select id="leave_2">
-                                <option value="Unknown">Unknown</option>
-                                <option value="No">No</option>
-                                <option value="Yes">Yes</option>
-                            </select>
-                            <br/>
-                            <select id="leave_3">
-                                <option value="Unknown">Unknown</option>
-                                <option value="No">No</option>
-                                <option value="Yes">Yes</option>
-                            </select>
-                        </div>
-                    </div>
-                    <hr className="autoToEndgame"/>
-                    <div className="endgame">
-                        <div>
-                            <p><b>Endgame</b></p>
-                            <ul>
-                                <li>1</li>
-                                <li>2</li>
-                                <li>3</li>
-                            </ul>
-                        </div>
+        <div className="core_container">
+            {/* FIRST ROW */}
+            <div className="container_row" style={{height: "10rem"}}>
+                <div className="container_col">
+                    <h2>🤖 AUTONOMOUS</h2>
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Robot #</th>
+                            <th>Leave?</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {[1, 2, 3].map((robot) => (<tr key={robot}>
+                            <td>{robot}</td>
+                            <td>
+                                <select>
+                                    {AUTO_LEAVE_OPTIONS.map((opt) => (
+                                        <option key={opt} value={opt}>{opt}</option>
+                                    ))}
+                                </select>
+                            </td>
+                        </tr>))}
+                        </tbody>
+                    </table>
+                </div>
+                <div className="hr_vert" />
+                <div className="container_col">
+                    <h2>⌛ ENDGAME</h2>
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Robot #</th>
+                            <th>Leave?</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {[1, 2, 3].map((robot) => (<tr key={robot}>
+                            <td>{robot}</td>
+                            <td>
+                                <select>
+                                    {ENDGAME_OPTIONS.map((opt) => (
+                                        <option key={opt} value={opt}>{opt}</option>
+                                    ))}
+                                </select>
+                            </td>
+                        </tr>))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-                        <div>
-                            <p style={{marginTop: "6px", marginBottom: "7px"}}>Barge Position</p>
-                            <select id="barge_1">
-                                <option value="Unknown">Unknown</option>
-                                <option value="None">None</option>
-                                <option value="Parked">Parked</option>
-                                <option value="ShallowCage">ShallowCage</option>
-                                <option value="DeepCage">DeepCage</option>
-                            </select>
-                            <br/>
-                            <select id="barge_2">
-                                <option value="Unknown">Unknown</option>
-                                <option value="None">None</option>
-                                <option value="Parked">Parked</option>
-                                <option value="ShallowCage">ShallowCage</option>
-                                <option value="DeepCage">DeepCage</option>
-                            </select>
-                            <br/>
-                            <select id="barge_3">
-                                <option value="Unknown">Unknown</option>
-                                <option value="None">None</option>
-                                <option value="Parked">Parked</option>
-                                <option value="ShallowCage">ShallowCage</option>
-                                <option value="DeepCage">DeepCage</option>
-                            </select>
-                        </div>
-                    </div>
+            <div className="hr_horiz" />
+
+            {/* SECOND ROW */}
+            <div className="container_row">
+                <div className="container_col">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Branch</th>
+                            {BRANCHES.map((branch) => (
+                                <th key={branch}>{branch}</th>
+                            ))}
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {LEVELS.map((level) => (
+                            <tr key={level}>
+                                <td>{level}</td>
+                                {BRANCHES.map((branch) => (
+                                    <td key={`${level}-${branch}`}>
+                                        <input className="scale" type="checkbox" />
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
                 </div>
-                <hr className="topToMiddle"/>
-                <div className="middlePart">
-                    <div style={{height: "7rem"}}>
-                        <ul style={{marginTop: "0.05rem"}}>
-                            <li style={{marginBottom: "0.475rem", marginTop: "0.9rem"}}>High Branch</li>
-                            <li style={{marginBottom: "0.475rem"}}>Middle Branch</li>
-                            <li style={{marginBottom: "0.7rem"}}>Low Branch</li>
-                            <li>Trough</li>
-                        </ul>
-                    </div>
-                    <div>
-                        &nbsp;&nbsp;A &nbsp;&nbsp;&nbsp;B &nbsp;&nbsp;&nbsp;C &nbsp;&nbsp;&nbsp;D &nbsp;&nbsp;&nbsp;E &nbsp;&nbsp;&nbsp;F &nbsp;&nbsp;&nbsp;G &nbsp;&nbsp;&nbsp;H &nbsp;&nbsp;&nbsp;I &nbsp;&nbsp;&nbsp;&nbsp;J &nbsp;&nbsp;&nbsp;&nbsp;K &nbsp;&nbsp;&nbsp;L
-                        <br/>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <br/>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <br/>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <input type="checkbox"></input>
-                        <br/>
-                        <div style={{display: "flex", flexDirection: "row",}}>
-                            <p className="troughText" style={{marginBottom:"0"}}>{troughCorals}</p>
-                            <div style={{display: "flex", flexDirection: "column", height: "2rem"}}>
-                                <button id="moreTroughCorals" style={{marginBottom: "0.05rem"}}></button>
-                                <button id="lessTroughCorals"></button>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <div style={{display: "flex", flexDirection: "row"}}>
-                            <p className="descriptionText">Processor&nbsp;&nbsp;</p><p className="troughText">{processorAlgae}</p>
-                            <div style={{display: "flex", flexDirection: "column", height: "2rem"}}>
-                                <button id="moreProcessorAlgae" style={{marginBottom: "0.05rem"}}></button>
-                                <button id="lessProcessorAlgae"></button>
-                            </div>
-                        </div>
-                        <br></br>
-                        <div style={{display: "flex", flexDirection: "row"}}>
-                            <p className="descriptionText">Net&nbsp;&nbsp;</p><p className="troughText">{netAlgae}</p>
-                            <div style={{display: "flex", flexDirection: "column", height: "2rem"}}>
-                                <button id="moreNetAlgae" style={{marginBottom: "0.05rem"}}></button>
-                                <button id="lessNetAlgae"></button>
-                            </div>
-                        </div>
-                    </div>
+                <div className="container_col">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Net</th>
+                            <th>Processor</th>
+                            <th>L1</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>
+                                <PlusMinusButton
+                                    onPlus={() => scoringHandlers.Net.onPlus()}
+                                    onMinus={() => scoringHandlers.Net.onMinus()}
+                                />
+                            </td>
+                            <td>
+                                <PlusMinusButton
+                                    onPlus={() => scoringHandlers.Processor.onPlus()}
+                                    onMinus={() => scoringHandlers.Processor.onMinus()}
+                                />
+                            </td>
+                            <td>
+                                <PlusMinusButton
+                                    onPlus={() => scoringHandlers.Through.onPlus()}
+                                    onMinus={() => scoringHandlers.Through.onMinus()}
+                                />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                <p>{netCount}</p>
+                            </th>
+                            <th>
+                                <p>{processorCount}</p>
+                            </th>
+                            <th>
+                                <p>{throughCount}</p>
+                            </th>
+                        </tr>
+                        </tbody>
+                    </table>
                 </div>
-                <hr className="middleToBottom"/>
-                <div className="bottomPart">
-                    <div className="penalties">
-                        <div>
-                            <p><b>Penalties against Blue</b></p>
-                            <ul>
-                                <li>G206</li>
-                                <li>G410 to Red</li>
-                                <li>G418 to Red</li>
-                                <li>G419 to Red</li>
-                                <li>G428 to Red</li>
-                            </ul>
-                        </div>
-                        <div>
-                            <br/>
-                            <br/>
-                            <input type="checkbox" style={{marginTop: "0.2rem"}}></input> <br/>
-                            <input type="checkbox"></input> <br/>
-                            <input type="checkbox"></input> <br/>
-                            <input type="checkbox"></input> <br/>
-                            <input type="checkbox"></input> <br/>
-                        </div>
-                    </div>
-                    <hr className="penaltiesToFouls"/>
-                    <div className="fouls">
-                        <div>
-                            <p style={{marginTop: "0.35rem"}}><b>Foul Points</b></p>
-                            <ul>
-                                <li><p style={{marginTop: "0.2rem", marginBottom: "0", width: "5rem"}}>Minor Foul</p>
-                                    <div style={{display: "flex", flexDirection: "row"}}>
-                                        <p className="foulsText" style={{marginTop: "0.1rem"}}>{minorFouls}</p>
-                                        <div style={{display: "flex", flexDirection: "column", height: "2rem"}}>
-                                            <button id="moreMinorFouls" style={{marginBottom: "0.05rem"}}></button>
-                                            <button id="lessMinorFouls"></button>
-                                    </div></div>
-                                </li>
-                                <li><p style={{marginTop: "0.2rem", marginBottom: "0", width: "5rem"}}>Major Foul</p>
-                                    <div style={{display: "flex", flexDirection: "row"}}>
-                                        <p className="foulsText" style={{marginTop: "0.1rem"}}>{majorFouls}</p>
-                                        <div style={{display: "flex", flexDirection: "column", height: "2rem"}}>
-                                            <button id="moreMajorFouls" style={{marginBottom: "0.05rem"}}></button>
-                                            <button id="lessMajorFouls"></button>
-                                    </div></div>
-                                </li>
-                                <li><p style={{marginTop: "0.2rem", marginBottom: "0", width: "5rem"}}>Adjust</p>
-                                    <div style={{display: "flex", flexDirection: "row", marginBottom: "0"}}>
-                                        <p className="foulsText" style={{marginTop: "0.1rem", marginBottom: "0"}}>{adjust}</p>
-                                        <div style={{display: "flex", flexDirection: "column", height: "2rem"}}>
-                                            <button id="moreAdjust" style={{marginBottom: "0.05rem"}}></button>
-                                            <button id="lessAdjust"></button>
-                                    </div></div>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
+            </div>
+
+            <div className="hr_horiz" />
+
+            {/* THIRD ROW */}
+            <div className="container_row" style={{height: "12.5rem"}}>
+                <div className="container_col">
+                    <h2>🏁 PENALTIES</h2>
+
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Penalty</th>
+                            <th>Effect</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {PENALTIES.map((penalty) => (
+                            <tr key={penalty}>
+                                <td>{penalty}</td>
+                                <td>
+                                    <input className="scale" type="checkbox" />
+                                </td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                </div>
+                <div className="hr_vert" />
+                <div className="container_col">
+                    <h2>🚩 FOULS</h2>
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Foul</th>
+                            <th>Points</th>
+                        </tr>
+                        </thead>
+                        <tbody>{FOULS.map((foul) => (
+                            <tr key={foul}>
+                                <td>{foul}</td>
+                                <td>
+                                    <PlusMinusButton
+                                        onPlus={foulHandlers[foul]!.onPlus}
+                                        onMinus={foulHandlers[foul]!.onMinus}
+                                    />
+                                </td>
+                                <td><p>
+                                    {foul === "Minor"
+                                        ? minorFoulCount
+                                        : foul === "Major"
+                                            ? majorFoulCount
+                                            : adjustmentFoulCount}
+                                </p></td>
+                            </tr>
+                        ))}</tbody>
+                    </table>
                 </div>
             </div>
         </div>
-    );
+        <div className="copyright">
+            <p>Developed by Jerry Fu 2025-{new Date().getFullYear()}</p>
+        </div>
+    </div>);
 }

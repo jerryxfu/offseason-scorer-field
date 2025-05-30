@@ -1,6 +1,5 @@
 import {io, Socket} from "socket.io-client";
 
-
 export interface ServerToClientEvents {
     "score:ack": (msg: string) => void;
     "match:start": () => void;
@@ -17,4 +16,4 @@ export interface ClientToServerEvents {
     "score:remove": (data: { alliance: "red" | "blue"; points: number }) => void;
 }
 
-export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io("http://192.168.83.66:3000");
+export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io("http://192.168.83.127:3000");
