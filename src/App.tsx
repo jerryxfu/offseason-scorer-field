@@ -8,8 +8,8 @@ export default function App() {
     const [connected, setConnected] = useState(false);
     const AUTO_LEAVE_OPTIONS = ["Unknown", "Yes", "No"];
     const ENDGAME_OPTIONS = ["Unknown", "DeepCage", "ShallowCage", "Parked", "None"];
-    const BRANCHES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
-    const PENALTIES = ["G206", "G410", "G418", "G419", "G428"];
+    const BRANCHES = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"];
+    const PENALTIES = ["g206", "g410", "g418", "g419", "g428"] as const;
     const FOULS = ["Minor", "Major", "Adjustment"] as const;
     const LEVELS = ["L4", "L3", "L2"];
 
@@ -18,32 +18,62 @@ export default function App() {
     const [throughCount, setThroughCount] = useState(0);
 
     type FoulType = typeof FOULS[number];
+    type PenaltyType = typeof PENALTIES[number];
     type ScoringType = "Net" | "Processor" | "Through";
 
     const scoringHandlers: Record<ScoringType, { onPlus: () => void; onMinus: () => void; }> = {
         Net: {
             onPlus: () => {
                 setNetCount((c) => c + 1);
+                socket.emit("score.algae.processor:add", {
+                    alliance: "red",
+                    count: 1,
+                });
             },
             onMinus: () => {
                 setNetCount((c) => Math.max(0, c - 1));
+                if (!(netCount <= 0)) {
+                    socket.emit("score.algae.processor:remove", {
+                        alliance: "red",
+                        count: 1,
+                    });
+                }
             },
         },
         Processor: {
             onPlus: () => {
                 setProcessorCount((c) => c + 1);
+                socket.emit("score.algae.net:add", {
+                    alliance: "red",
+                    count: 1,
+                });
             },
             onMinus: () => {
-                setProcessorCount((c) => Math.max(0, c - 1)
-                );
+                setProcessorCount((c) => Math.max(0, c - 1));
+                if (!(processorCount <= 0)) {
+                    socket.emit("score.algae.net:remove", {
+                        alliance: "red",
+                        count: 1,
+                    });
+                }
             },
         },
         Through: {
             onPlus: () => {
                 setThroughCount((c) => c + 1);
+                socket.emit("score.coral.through:add", {
+                    alliance: "red",
+                    count: 1,
+                });
             },
             onMinus: () => {
                 setThroughCount((c) => Math.max(0, c - 1));
+                if (!(throughCount <= 0)) {
+                    socket.emit("score.coral.through:remove", {
+                        alliance: "red",
+                        count: 1,
+                    });
+                }
             },
         }
     };
@@ -56,28 +86,83 @@ export default function App() {
         Minor: {
             onPlus: () => {
                 setMinorFoulCount((c) => c + 1);
+                socket.emit("score.foul:add", {
+                    alliance: "red",
+                    type: "minor",
+                    count: 1,
+                });
             },
             onMinus: () => {
                 setMinorFoulCount((c) => Math.max(0, c - 1));
+                if (!(minorFoulCount <= 0)) {
+                    socket.emit("score.foul:remove", {
+                        alliance: "red",
+                        type: "minor",
+                        count: 1,
+                    });
+                }
             },
         },
         Major: {
             onPlus: () => {
                 setMajorFoulCount((c) => c + 1);
+                socket.emit("score.foul:add", {
+                    alliance: "red",
+                    type: "major",
+                    count: 1,
+                });
             },
             onMinus: () => {
                 setMajorFoulCount((c) => Math.max(0, c - 1));
+                if (!(majorFoulCount <= 0)) {
+                    socket.emit("score.foul:remove", {
+                        alliance: "red",
+                        type: "major",
+                        count: 1,
+                    });
+                }
             },
         },
         Adjustment: {
             onPlus: () => {
                 setAdjustmentFoulCount((c) => c + 1);
+                socket.emit("score.foul:add", {
+                    alliance: "red",
+                    type: "adjustment",
+                    count: 1,
+                });
             },
             onMinus: () => {
                 setAdjustmentFoulCount((c) => Math.max(0, c - 1));
+                if (!(adjustmentFoulCount <= 0)) {
+                    socket.emit("score.foul:remove", {
+                        alliance: "red",
+                        type: "adjustment",
+                        count: 1,
+                    });
+                }
             },
         },
     };
+
+    function handlePenaltyChange(
+        penalty: PenaltyType,
+        value: boolean,
+    ) {
+        if (value) {
+            socket.emit("score.penalty:set", {
+                alliance: "red",
+                type: penalty,
+                value: true,
+            });
+        } else {
+            socket.emit("score.penalty:set", {
+                alliance: "red",
+                type: penalty,
+                value: false,
+            });
+        }
+    }
 
     useEffect(() => {
         socket.on("connect", () => {
@@ -98,10 +183,6 @@ export default function App() {
             socket.off(); // clean up listeners
         };
     }, []);
-
-    const sendScore = () => {
-        socket.emit("score:add", {alliance: "blue", points: 5});
-    };
 
     return (<div>
         <StatusBar status={connected ? "Connected 🟢" : "Disconnected 🔴"} alliance={"RED"} matchStatus={"hold"} />
@@ -139,7 +220,7 @@ export default function App() {
                         <thead>
                         <tr>
                             <th>Robot #</th>
-                            <th>Leave?</th>
+                            <th>Position</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -156,6 +237,36 @@ export default function App() {
                         </tbody>
                     </table>
                 </div>
+                <div className="hr_vert" />
+                <div className="container_col">
+                    <h2>🚩 FOULS</h2>
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Foul</th>
+                            <th>Count</th>
+                        </tr>
+                        </thead>
+                        <tbody>{FOULS.map((foul) => (
+                            <tr key={foul}>
+                                <td>{foul}</td>
+                                <td>
+                                    <PlusMinusButton
+                                        onPlus={foulHandlers[foul]!.onPlus}
+                                        onMinus={foulHandlers[foul]!.onMinus}
+                                    />
+                                </td>
+                                <td><p>
+                                    {foul === "Minor"
+                                        ? minorFoulCount
+                                        : foul === "Major"
+                                            ? majorFoulCount
+                                            : adjustmentFoulCount}
+                                </p></td>
+                            </tr>
+                        ))}</tbody>
+                    </table>
+                </div>
             </div>
 
             <div className="hr_horiz" />
@@ -168,7 +279,7 @@ export default function App() {
                         <tr>
                             <th>Branch</th>
                             {BRANCHES.map((branch) => (
-                                <th key={branch}>{branch}</th>
+                                <th key={branch}>{branch.toUpperCase()}</th>
                             ))}
                         </tr>
                         </thead>
@@ -235,60 +346,35 @@ export default function App() {
             <div className="hr_horiz" />
 
             {/* THIRD ROW */}
-            <div className="container_row" style={{height: "12.5rem"}}>
-                <div className="container_col">
-                    <h2>🏁 PENALTIES</h2>
+            {/*<div className="container_row" style={{height: "12.5rem"}}>*/}
+            {/*    <div className="container_col">*/}
+            {/*        <h2>🏁 PENALTIES</h2>*/}
 
-                    <table>
-                        <thead>
-                        <tr>
-                            <th>Penalty</th>
-                            <th>Effect</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {PENALTIES.map((penalty) => (
-                            <tr key={penalty}>
-                                <td>{penalty}</td>
-                                <td>
-                                    <input className="scale" type="checkbox" />
-                                </td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                </div>
-                <div className="hr_vert" />
-                <div className="container_col">
-                    <h2>🚩 FOULS</h2>
-                    <table>
-                        <thead>
-                        <tr>
-                            <th>Foul</th>
-                            <th>Points</th>
-                        </tr>
-                        </thead>
-                        <tbody>{FOULS.map((foul) => (
-                            <tr key={foul}>
-                                <td>{foul}</td>
-                                <td>
-                                    <PlusMinusButton
-                                        onPlus={foulHandlers[foul]!.onPlus}
-                                        onMinus={foulHandlers[foul]!.onMinus}
-                                    />
-                                </td>
-                                <td><p>
-                                    {foul === "Minor"
-                                        ? minorFoulCount
-                                        : foul === "Major"
-                                            ? majorFoulCount
-                                            : adjustmentFoulCount}
-                                </p></td>
-                            </tr>
-                        ))}</tbody>
-                    </table>
-                </div>
-            </div>
+            {/*        <table>*/}
+            {/*            <thead>*/}
+            {/*            <tr>*/}
+            {/*                <th>Penalty</th>*/}
+            {/*                <th>Effect</th>*/}
+            {/*            </tr>*/}
+            {/*            </thead>*/}
+            {/*            <tbody>*/}
+            {/*            {PENALTIES.map((penalty) => (*/}
+            {/*                <tr key={penalty}>*/}
+            {/*                    <td>{penalty.toUpperCase()}</td>*/}
+            {/*                    <td>*/}
+            {/*                        <input*/}
+            {/*                            className="scale"*/}
+            {/*                            type="checkbox"*/}
+            {/*                            onChange={(event) => handlePenaltyChange(penalty, event.target.checked)}*/}
+            {/*                        />*/}
+            {/*                    </td>*/}
+            {/*                </tr>*/}
+            {/*            ))}*/}
+            {/*            </tbody>*/}
+            {/*        </table>*/}
+            {/*    </div>*/}
+
+            {/*</div>*/}
         </div>
         <div className="copyright">
             <p>Developed by Jerry Fu 2025-{new Date().getFullYear()}</p>
