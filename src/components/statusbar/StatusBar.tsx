@@ -3,7 +3,7 @@ import "./StatusBar.scss";
 
 export default function StatusBar({status, alliance, matchStatus}: { status: string, alliance: string, matchStatus: string }) {
     return (
-        <nav className="statusbar">
+        <nav className="statusbar" style={{backgroundColor: status.toLowerCase().startsWith("connected") ? "#4caf50" : "#f44336"}}>
             <img src="/rfq_logo_vertical.png" alt="website icon" style={{height: "100%", marginRight: "1rem"}} />
             <h1>SCORER INTERFACE</h1>
             <ul className="statusbar_elements">

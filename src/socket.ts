@@ -27,14 +27,6 @@ export interface ClientToServerEvents {
         count: number;
     }) => void;
 
-    "score.algae.processor:add": (data: {
-        alliance: "red" | "blue";
-        count: number;
-    }) => void;
-    "score.algae.processor:remove": (data: {
-        alliance: "red" | "blue";
-        count: number;
-    }) => void;
     "score.algae.net:add": (data: {
         alliance: "red" | "blue";
         count: number;
@@ -43,11 +35,19 @@ export interface ClientToServerEvents {
         alliance: "red" | "blue";
         count: number;
     }) => void;
+    "score.algae.processor:add": (data: {
+        alliance: "red" | "blue";
+        count: number;
+    }) => void;
+    "score.algae.processor:remove": (data: {
+        alliance: "red" | "blue";
+        count: number;
+    }) => void;
 
     "score.auto.leave:set": (data: {
         alliance: "red" | "blue";
         robotId: 1 | 2 | 3;
-        state: "yes" | "no";
+        value: "yes" | "no";
     }) => void;
 
     "score.endgame:set": (data: {

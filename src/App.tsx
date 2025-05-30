@@ -6,12 +6,14 @@ import PlusMinusButton from "./components/plusminusbutton/PlusMinusButton.tsx";
 
 export default function App() {
     const [connected, setConnected] = useState(false);
+    const [matchStatus, setMatchStatus] = useState("⏳ Awaiting...");
+
     const AUTO_LEAVE_OPTIONS = ["Unknown", "Yes", "No"];
     const ENDGAME_OPTIONS = ["Unknown", "DeepCage", "ShallowCage", "Parked", "None"];
-    const BRANCHES = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"];
+    const BRANCHES = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"] as const;
     const PENALTIES = ["g206", "g410", "g418", "g419", "g428"] as const;
     const FOULS = ["Minor", "Major", "Adjustment"] as const;
-    const LEVELS = ["L4", "L3", "L2"];
+    const LEVELS = ["l4", "l3", "l2"] as const;
 
     const [netCount, setNetCount] = useState(0);
     const [processorCount, setProcessorCount] = useState(0);
@@ -20,6 +22,27 @@ export default function App() {
     type FoulType = typeof FOULS[number];
     type PenaltyType = typeof PENALTIES[number];
     type ScoringType = "Net" | "Processor" | "Through";
+
+    function handleAutoLeaveChange(robotId: 1 | 2 | 3, value: string) {
+        const v = value === "Yes" ? "yes" : value === "No" ? "no" : "no";
+        socket.emit("score.auto.leave:set", {
+            alliance: "red",
+            robotId: robotId,
+            value: v,
+        });
+    }
+
+    function handleEndgameChange(robotId: 1 | 2 | 3, value: string) {
+        let state: "none" | "parked" | "deepcage" | "shallowcage" = "none";
+        if (value === "DeepCage") state = "deepcage";
+        else if (value === "ShallowCage") state = "shallowcage";
+        else if (value === "Parked") state = "parked";
+        socket.emit("score.endgame:set", {
+            alliance: "red",
+            robotId,
+            state,
+        });
+    }
 
     const scoringHandlers: Record<ScoringType, { onPlus: () => void; onMinus: () => void; }> = {
         Net: {
@@ -77,6 +100,22 @@ export default function App() {
             },
         }
     };
+
+    function reefHandler(level: "l4" | "l3" | "l2", branch: "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l", value: boolean) {
+        if (value) {
+            socket.emit("score.coral:add", {
+                alliance: "red",
+                level,
+                branch,
+            });
+        } else {
+            socket.emit("score.coral:remove", {
+                alliance: "red",
+                level,
+                branch,
+            });
+        }
+    }
 
     const [minorFoulCount, setMinorFoulCount] = useState(0);
     const [majorFoulCount, setMajorFoulCount] = useState(0);
@@ -179,13 +218,31 @@ export default function App() {
             console.log("Server ack:", msg);
         });
 
+        socket.on("match:start", () => {
+            setMatchStatus("🟢 In progress!");
+        });
+
+        socket.on("match:end", () => {
+            setMatchStatus("🔴 Ended");
+        });
+
+        socket.on("match:reset", () => {
+            setMatchStatus("⏳ Awaiting...");
+            setNetCount(0);
+            setProcessorCount(0);
+            setThroughCount(0);
+            setMinorFoulCount(0);
+            setMajorFoulCount(0);
+            setAdjustmentFoulCount(0);
+        });
+
         return () => {
             socket.off(); // clean up listeners
         };
     }, []);
 
     return (<div>
-        <StatusBar status={connected ? "Connected 🟢" : "Disconnected 🔴"} alliance={"RED"} matchStatus={"hold"} />
+        <StatusBar status={connected ? "Connected 🟢" : "Disconnected 🔴"} alliance={"Manual mode"} matchStatus={matchStatus} />
 
         <div className="core_container">
             {/* FIRST ROW */}
@@ -203,7 +260,7 @@ export default function App() {
                         {[1, 2, 3].map((robot) => (<tr key={robot}>
                             <td>{robot}</td>
                             <td>
-                                <select>
+                                <select onChange={e => handleAutoLeaveChange(robot as 1 | 2 | 3, e.target.value)}>
                                     {AUTO_LEAVE_OPTIONS.map((opt) => (
                                         <option key={opt} value={opt}>{opt}</option>
                                     ))}
@@ -227,7 +284,7 @@ export default function App() {
                         {[1, 2, 3].map((robot) => (<tr key={robot}>
                             <td>{robot}</td>
                             <td>
-                                <select>
+                                <select onChange={e => handleEndgameChange(robot as 1 | 2 | 3, e.target.value)}>
                                     {ENDGAME_OPTIONS.map((opt) => (
                                         <option key={opt} value={opt}>{opt}</option>
                                     ))}
@@ -289,7 +346,8 @@ export default function App() {
                                 <td>{level}</td>
                                 {BRANCHES.map((branch) => (
                                     <td key={`${level}-${branch}`}>
-                                        <input className="scale" type="checkbox" />
+                                        <input className="scale" type="checkbox"
+                                               onChange={(event) => reefHandler(level, branch, event.target.checked)} />
                                     </td>
                                 ))}
                             </tr>
@@ -377,7 +435,7 @@ export default function App() {
             {/*</div>*/}
         </div>
         <div className="copyright">
-            <p>Developed by Jerry Fu 2025-{new Date().getFullYear()}</p>
+            <p>© Developed by Jerry Fu 2025-{new Date().getFullYear()}</p>
         </div>
     </div>);
 }
