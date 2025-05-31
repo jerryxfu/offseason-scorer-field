@@ -3,10 +3,19 @@ import {socket} from "./socket";
 import "./App.scss";
 import StatusBar from "./components/statusbar/StatusBar.tsx";
 import PlusMinusButton from "./components/plusminusbutton/PlusMinusButton.tsx";
+import AllianceToggle from "./components/alliancetoggle/AllianceToggle.tsx";
+import {Alliance} from "./types.ts";
 
 export default function App() {
     const [connected, setConnected] = useState(false);
     const [matchStatus, setMatchStatus] = useState("⏳ Awaiting...");
+    const [allianceAuto, setAllianceAuto] = useState<Alliance>("blue");
+    const [allianceEndgame, setAllianceEndgame] = useState<Alliance>("blue");
+    const [allianceReef, setAllianceReef] = useState<Alliance>("blue");
+    const [allianceNet, setAllianceNet] = useState<Alliance>("blue");
+    const [allianceProcessor, setAllianceProcessor] = useState<Alliance>("blue");
+    const [allianceThrough, setAllianceThrough] = useState<Alliance>("blue");
+    const [alliancePenalty, setAlliancePenalty] = useState<Alliance>("blue");
 
     const AUTO_LEAVE_OPTIONS = ["Unknown", "Yes", "No"];
     const ENDGAME_OPTIONS = ["Unknown", "DeepCage", "ShallowCage", "Parked", "None"];
@@ -14,6 +23,24 @@ export default function App() {
     const PENALTIES = ["g206", "g410", "g418", "g419", "g428"] as const;
     const FOULS = ["Minor", "Major", "Adjustment"] as const;
     const LEVELS = ["l4", "l3", "l2"] as const;
+
+    const initialReefCheckboxes = Object.fromEntries(
+        LEVELS.flatMap(level =>
+            BRANCHES.map(branch => [[level, branch].join("-"), false])
+        )
+    ) as Record<string, boolean>;
+    const [reefCheckboxes, setReefCheckboxes] = useState(initialReefCheckboxes);
+
+    const [autoLeaveDropdowns, setAutoLeaveDropdowns] = useState<{ [robot: number]: string }>({
+        1: "Unknown",
+        2: "Unknown",
+        3: "Unknown"
+    });
+    const [endgameDropdowns, setEndgameDropdowns] = useState<{ [robot: number]: string }>({
+        1: "Unknown",
+        2: "Unknown",
+        3: "Unknown"
+    });
 
     const [netCount, setNetCount] = useState(0);
     const [processorCount, setProcessorCount] = useState(0);
@@ -24,21 +51,24 @@ export default function App() {
     type ScoringType = "Net" | "Processor" | "Through";
 
     function handleAutoLeaveChange(robotId: 1 | 2 | 3, value: string) {
+        setAutoLeaveDropdowns(prev => ({...prev, [robotId]: value}));
         const v = value === "Yes" ? "yes" : value === "No" ? "no" : "no";
         socket.emit("score.auto.leave:set", {
-            alliance: "red",
+            alliance: allianceAuto,
             robotId: robotId,
             value: v,
         });
     }
 
     function handleEndgameChange(robotId: 1 | 2 | 3, value: string) {
+        setEndgameDropdowns(prev => ({...prev, [robotId]: value}));
         let state: "none" | "parked" | "deepcage" | "shallowcage" = "none";
         if (value === "DeepCage") state = "deepcage";
         else if (value === "ShallowCage") state = "shallowcage";
         else if (value === "Parked") state = "parked";
+
         socket.emit("score.endgame:set", {
-            alliance: "red",
+            alliance: allianceEndgame,
             robotId,
             state,
         });
@@ -48,16 +78,16 @@ export default function App() {
         Net: {
             onPlus: () => {
                 setNetCount((c) => c + 1);
-                socket.emit("score.algae.processor:add", {
-                    alliance: "red",
+                socket.emit("score.algae.net:add", {
+                    alliance: allianceNet,
                     count: 1,
                 });
             },
             onMinus: () => {
                 setNetCount((c) => Math.max(0, c - 1));
                 if (!(netCount <= 0)) {
-                    socket.emit("score.algae.processor:remove", {
-                        alliance: "red",
+                    socket.emit("score.algae.net:remove", {
+                        alliance: allianceNet,
                         count: 1,
                     });
                 }
@@ -66,16 +96,16 @@ export default function App() {
         Processor: {
             onPlus: () => {
                 setProcessorCount((c) => c + 1);
-                socket.emit("score.algae.net:add", {
-                    alliance: "red",
+                socket.emit("score.algae.processor:add", {
+                    alliance: allianceProcessor,
                     count: 1,
                 });
             },
             onMinus: () => {
                 setProcessorCount((c) => Math.max(0, c - 1));
                 if (!(processorCount <= 0)) {
-                    socket.emit("score.algae.net:remove", {
-                        alliance: "red",
+                    socket.emit("score.algae.processor:remove", {
+                        alliance: allianceProcessor,
                         count: 1,
                     });
                 }
@@ -85,7 +115,7 @@ export default function App() {
             onPlus: () => {
                 setThroughCount((c) => c + 1);
                 socket.emit("score.coral.through:add", {
-                    alliance: "red",
+                    alliance: allianceThrough,
                     count: 1,
                 });
             },
@@ -93,7 +123,7 @@ export default function App() {
                 setThroughCount((c) => Math.max(0, c - 1));
                 if (!(throughCount <= 0)) {
                     socket.emit("score.coral.through:remove", {
-                        alliance: "red",
+                        alliance: allianceThrough,
                         count: 1,
                     });
                 }
@@ -102,87 +132,106 @@ export default function App() {
     };
 
     function reefHandler(level: "l4" | "l3" | "l2", branch: "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l", value: boolean) {
+        setReefCheckboxes(prev => ({
+            ...prev,
+            [`${level}-${branch}`]: value
+        }));
+
         if (value) {
             socket.emit("score.coral:add", {
-                alliance: "red",
+                alliance: allianceReef,
                 level,
                 branch,
             });
         } else {
             socket.emit("score.coral:remove", {
-                alliance: "red",
+                alliance: allianceReef,
                 level,
                 branch,
             });
         }
     }
 
-    const [minorFoulCount, setMinorFoulCount] = useState(0);
-    const [majorFoulCount, setMajorFoulCount] = useState(0);
-    const [adjustmentFoulCount, setAdjustmentFoulCount] = useState(0);
+    const [minorFoulCountRed, setMinorFoulCountRed] = useState(0);
+    const [minorFoulCountBlue, setMinorFoulCountBlue] = useState(0);
+    const [majorFoulCountRed, setMajorFoulCountRed] = useState(0);
+    const [majorFoulCountBlue, setMajorFoulCountBlue] = useState(0);
+    const [adjustmentFoulCountRed, setAdjustmentFoulCountRed] = useState(0);
+    const [adjustmentFoulCountBlue, setAdjustmentFoulCountBlue] = useState(0);
 
-    const foulHandlers: Record<FoulType, { onPlus: () => void; onMinus: () => void; }> = {
-        Minor: {
-            onPlus: () => {
-                setMinorFoulCount((c) => c + 1);
-                socket.emit("score.foul:add", {
-                    alliance: "red",
-                    type: "minor",
-                    count: 1,
-                });
-            },
-            onMinus: () => {
-                setMinorFoulCount((c) => Math.max(0, c - 1));
-                if (!(minorFoulCount <= 0)) {
-                    socket.emit("score.foul:remove", {
-                        alliance: "red",
+    function getFoulHandlers(alliance: "red" | "blue") {
+        return {
+            Minor: {
+                onPlus: () => {
+                    (alliance === "red" ? setMinorFoulCountRed : setMinorFoulCountBlue)(c => c + 1);
+                    socket.emit("score.foul:add", {
+                        alliance,
                         type: "minor",
                         count: 1,
                     });
-                }
+                },
+                onMinus: () => {
+                    const setCount = alliance === "red" ? setMinorFoulCountRed : setMinorFoulCountBlue;
+                    const count = alliance === "red" ? minorFoulCountRed : minorFoulCountBlue;
+                    setCount(c => Math.max(0, c - 1));
+                    if (count > 0) {
+                        socket.emit("score.foul:remove", {
+                            alliance,
+                            type: "minor",
+                            count: 1,
+                        });
+                    }
+                },
             },
-        },
-        Major: {
-            onPlus: () => {
-                setMajorFoulCount((c) => c + 1);
-                socket.emit("score.foul:add", {
-                    alliance: "red",
-                    type: "major",
-                    count: 1,
-                });
-            },
-            onMinus: () => {
-                setMajorFoulCount((c) => Math.max(0, c - 1));
-                if (!(majorFoulCount <= 0)) {
-                    socket.emit("score.foul:remove", {
-                        alliance: "red",
+            Major: {
+                onPlus: () => {
+                    (alliance === "red" ? setMajorFoulCountRed : setMajorFoulCountBlue)(c => c + 1);
+                    socket.emit("score.foul:add", {
+                        alliance,
                         type: "major",
                         count: 1,
                     });
-                }
+                },
+                onMinus: () => {
+                    const setCount = alliance === "red" ? setMajorFoulCountRed : setMajorFoulCountBlue;
+                    const count = alliance === "red" ? majorFoulCountRed : majorFoulCountBlue;
+                    setCount(c => Math.max(0, c - 1));
+                    if (count > 0) {
+                        socket.emit("score.foul:remove", {
+                            alliance,
+                            type: "major",
+                            count: 1,
+                        });
+                    }
+                },
             },
-        },
-        Adjustment: {
-            onPlus: () => {
-                setAdjustmentFoulCount((c) => c + 1);
-                socket.emit("score.foul:add", {
-                    alliance: "red",
-                    type: "adjustment",
-                    count: 1,
-                });
-            },
-            onMinus: () => {
-                setAdjustmentFoulCount((c) => Math.max(0, c - 1));
-                if (!(adjustmentFoulCount <= 0)) {
-                    socket.emit("score.foul:remove", {
-                        alliance: "red",
+            Adjustment: {
+                onPlus: () => {
+                    (alliance === "red" ? setAdjustmentFoulCountRed : setAdjustmentFoulCountBlue)(c => c + 1);
+                    socket.emit("score.foul:add", {
+                        alliance,
                         type: "adjustment",
                         count: 1,
                     });
-                }
+                },
+                onMinus: () => {
+                    const setCount = alliance === "red" ? setAdjustmentFoulCountRed : setAdjustmentFoulCountBlue;
+                    const count = alliance === "red" ? adjustmentFoulCountRed : adjustmentFoulCountBlue;
+                    setCount(c => Math.max(0, c - 1));
+                    if (count > 0) {
+                        socket.emit("score.foul:remove", {
+                            alliance,
+                            type: "adjustment",
+                            count: 1,
+                        });
+                    }
+                },
             },
-        },
-    };
+        };
+    }
+
+    const foulHandlersRed = getFoulHandlers("red");
+    const foulHandlersBlue = getFoulHandlers("blue");
 
     function handlePenaltyChange(
         penalty: PenaltyType,
@@ -190,13 +239,13 @@ export default function App() {
     ) {
         if (value) {
             socket.emit("score.penalty:set", {
-                alliance: "red",
+                alliance: alliancePenalty,
                 type: penalty,
                 value: true,
             });
         } else {
             socket.emit("score.penalty:set", {
-                alliance: "red",
+                alliance: alliancePenalty,
                 type: penalty,
                 value: false,
             });
@@ -231,22 +280,29 @@ export default function App() {
             setNetCount(0);
             setProcessorCount(0);
             setThroughCount(0);
-            setMinorFoulCount(0);
-            setMajorFoulCount(0);
-            setAdjustmentFoulCount(0);
+            setMinorFoulCountRed(0);
+            setMajorFoulCountRed(0);
+            setAdjustmentFoulCountRed(0);
+            setMinorFoulCountBlue(0);
+            setMajorFoulCountBlue(0);
+            setAdjustmentFoulCountBlue(0);
+            setReefCheckboxes(initialReefCheckboxes);
+            setAutoLeaveDropdowns({1: "Unknown", 2: "Unknown", 3: "Unknown"});
+            setEndgameDropdowns({1: "Unknown", 2: "Unknown", 3: "Unknown"});
+
         });
 
         return () => {
             socket.off(); // clean up listeners
         };
-    }, []);
+    }, [initialReefCheckboxes]);
 
     return (<div>
         <StatusBar status={connected ? "Connected 🟢" : "Disconnected 🔴"} alliance={"Manual mode"} matchStatus={matchStatus} />
 
         <div className="core_container">
             {/* FIRST ROW */}
-            <div className="container_row" style={{height: "10rem"}}>
+            <div className="container_row" style={{height: "11rem"}}>
                 <div className="container_col">
                     <h2>🤖 AUTONOMOUS</h2>
                     <table>
@@ -260,13 +316,25 @@ export default function App() {
                         {[1, 2, 3].map((robot) => (<tr key={robot}>
                             <td>{robot}</td>
                             <td>
-                                <select onChange={e => handleAutoLeaveChange(robot as 1 | 2 | 3, e.target.value)}>
-                                    {AUTO_LEAVE_OPTIONS.map((opt) => (
+                                <select
+                                    value={autoLeaveDropdowns[robot]}
+                                    onChange={e => handleAutoLeaveChange(robot as 1 | 2 | 3, e.target.value)}
+                                >
+                                    {AUTO_LEAVE_OPTIONS.map(opt => (
                                         <option key={opt} value={opt}>{opt}</option>
                                     ))}
                                 </select>
                             </td>
                         </tr>))}
+                        <tr>
+                            <td>
+                                <AllianceToggle
+                                    alliance={allianceAuto}
+                                    checked={allianceAuto === "red"}
+                                    onChange={() => allianceAuto === "blue" ? setAllianceAuto("red") : setAllianceAuto("blue")}
+                                    label="" />
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
                 </div>
@@ -284,19 +352,31 @@ export default function App() {
                         {[1, 2, 3].map((robot) => (<tr key={robot}>
                             <td>{robot}</td>
                             <td>
-                                <select onChange={e => handleEndgameChange(robot as 1 | 2 | 3, e.target.value)}>
+                                <select
+                                    value={endgameDropdowns[robot]}
+                                    onChange={e => handleEndgameChange(robot as 1 | 2 | 3, e.target.value)}
+                                >
                                     {ENDGAME_OPTIONS.map((opt) => (
                                         <option key={opt} value={opt}>{opt}</option>
                                     ))}
                                 </select>
                             </td>
                         </tr>))}
+                        <tr>
+                            <td>
+                                <AllianceToggle
+                                    alliance={allianceEndgame}
+                                    checked={allianceEndgame === "red"}
+                                    onChange={() => allianceEndgame === "blue" ? setAllianceEndgame("red") : setAllianceEndgame("blue")}
+                                    label="" />
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
                 </div>
                 <div className="hr_vert" />
                 <div className="container_col">
-                    <h2>🚩 FOULS</h2>
+                    <h2>🟦 FOULS BLUE</h2>
                     <table>
                         <thead>
                         <tr>
@@ -309,16 +389,45 @@ export default function App() {
                                 <td>{foul}</td>
                                 <td>
                                     <PlusMinusButton
-                                        onPlus={foulHandlers[foul]!.onPlus}
-                                        onMinus={foulHandlers[foul]!.onMinus}
+                                        onPlus={foulHandlersBlue[foul]!.onPlus}
+                                        onMinus={foulHandlersBlue[foul]!.onMinus}
                                     />
                                 </td>
                                 <td><p>
                                     {foul === "Minor"
-                                        ? minorFoulCount
+                                        ? minorFoulCountBlue
                                         : foul === "Major"
-                                            ? majorFoulCount
-                                            : adjustmentFoulCount}
+                                            ? majorFoulCountBlue
+                                            : adjustmentFoulCountBlue}
+                                </p></td>
+                            </tr>
+                        ))}</tbody>
+                    </table>
+                </div>
+                <div className="container_col">
+                    <h2>🟥 FOULS RED</h2>
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Foul</th>
+                            <th>Count</th>
+                        </tr>
+                        </thead>
+                        <tbody>{FOULS.map((foul) => (
+                            <tr key={foul}>
+                                <td>{foul}</td>
+                                <td>
+                                    <PlusMinusButton
+                                        onPlus={foulHandlersRed[foul]!.onPlus}
+                                        onMinus={foulHandlersRed[foul]!.onMinus}
+                                    />
+                                </td>
+                                <td><p>
+                                    {foul === "Minor"
+                                        ? minorFoulCountRed
+                                        : foul === "Major"
+                                            ? majorFoulCountRed
+                                            : adjustmentFoulCountRed}
                                 </p></td>
                             </tr>
                         ))}</tbody>
@@ -343,15 +452,28 @@ export default function App() {
                         <tbody>
                         {LEVELS.map((level) => (
                             <tr key={level}>
-                                <td>{level}</td>
+                                <td>{level.toUpperCase()}</td>
                                 {BRANCHES.map((branch) => (
                                     <td key={`${level}-${branch}`}>
-                                        <input className="scale" type="checkbox"
-                                               onChange={(event) => reefHandler(level, branch, event.target.checked)} />
+                                        <input
+                                            className="scale"
+                                            type="checkbox"
+                                            checked={reefCheckboxes[`${level}-${branch}`] || false}
+                                            onChange={event => reefHandler(level, branch, event.target.checked)}
+                                        />
                                     </td>
                                 ))}
                             </tr>
                         ))}
+                        <tr>
+                            <td>
+                                <AllianceToggle
+                                    alliance={allianceReef}
+                                    checked={allianceReef === "red"}
+                                    onChange={() => allianceReef === "blue" ? setAllianceReef("red") : setAllianceReef("blue")}
+                                    label="" />
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
                 </div>
@@ -396,12 +518,72 @@ export default function App() {
                                 <p>{throughCount}</p>
                             </th>
                         </tr>
+                        <tr>
+                            <th>
+                                <AllianceToggle
+                                    alliance={allianceNet}
+                                    checked={allianceNet === "red"}
+                                    onChange={() => allianceNet === "blue" ? setAllianceNet("red") : setAllianceNet("blue")}
+                                    label="" />
+                            </th>
+                            <th>
+                                <AllianceToggle
+                                    alliance={allianceProcessor}
+                                    checked={allianceProcessor === "red"}
+                                    onChange={() => allianceProcessor === "blue" ? setAllianceProcessor("red") : setAllianceProcessor("blue")}
+                                    label="" />
+                            </th>
+                            <th>
+                                <AllianceToggle
+                                    alliance={allianceThrough}
+                                    checked={allianceThrough === "red"}
+                                    onChange={() => allianceThrough === "blue" ? setAllianceThrough("red") : setAllianceThrough("blue")}
+                                    label="" />
+                            </th>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div className="container_col">
+                    <h4>Robot team numbers</h4>
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Team number</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>
+                                1
+                            </td>
+                            <td>
+                                0000
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                2
+                            </td>
+                            <td>
+                                0000
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                3
+                            </td>
+                            <td>
+                                0000
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <div className="hr_horiz" />
+            {/*<div className="hr_horiz" />*/}
 
             {/* THIRD ROW */}
             {/*<div className="container_row" style={{height: "12.5rem"}}>*/}
