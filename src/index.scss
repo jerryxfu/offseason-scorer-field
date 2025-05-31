@@ -36,13 +36,39 @@ h2, h3, h4, h5, h6 {
     margin-bottom: 3px;
 }
 
-.flash {
-    animation: flash-bg 0.4s;
+.flash-green {
+    animation: flash-green 0.4s;
 }
 
-@keyframes flash-bg {
+@keyframes flash-green {
     0% {
-        background: #ffe066;
+        background: #5cb85c;
+    }
+    100% {
+        background: transparent;
+    }
+}
+
+.flash-yellow {
+    animation: flash-yellow 0.4s;
+}
+
+@keyframes flash-yellow {
+    0% {
+        background: #f0ad4e;
+    }
+    100% {
+        background: transparent;
+    }
+}
+
+.flash-red {
+    animation: flash-red 0.4s;
+}
+
+@keyframes flash-red {
+    0% {
+        background: #d9534f;
     }
     100% {
         background: transparent;

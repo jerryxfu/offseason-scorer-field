@@ -1,4 +1,5 @@
 import React from "react";
+import "./AllianceToggle.scss";
 
 interface AllianceToggleProps {
     alliance: "red" | "blue";
@@ -10,7 +11,7 @@ interface AllianceToggleProps {
 export default function AllianceToggle({alliance, checked, onChange, label}: AllianceToggleProps) {
     const color = alliance === "red" ? "#e74c3c" : "#3498db";
     return (
-        <label style={{display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.2rem"}}>
+        <label className="alliancetoggle" style={{display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.2rem"}}>
             {label && <span>{label}</span>}
             <span style={{position: "relative", display: "inline-block", width: 32, height: 18}}>
                 <input
