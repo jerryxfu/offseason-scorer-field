@@ -5,6 +5,7 @@ import StatusBar from "./components/statusbar/StatusBar.tsx";
 import PlusMinusButton from "./components/plusminusbutton/PlusMinusButton.tsx";
 import AllianceToggle from "./components/alliancetoggle/AllianceToggle.tsx";
 import {Alliance} from "./types.ts";
+import {useFlashOnChange} from "./hooks/useFlashOnChange.ts";
 
 export default function App() {
     const [connected, setConnected] = useState(false);
@@ -29,7 +30,8 @@ export default function App() {
             BRANCHES.map(branch => [[level, branch].join("-"), false])
         )
     ) as Record<string, boolean>;
-    const [reefCheckboxes, setReefCheckboxes] = useState(initialReefCheckboxes);
+    const [reefCheckboxesTeleop, setReefCheckboxesTeleop] = useState(initialReefCheckboxes);
+    const [reefCheckboxesAuto, setReefCheckboxesAuto] = useState(initialReefCheckboxes);
 
     const [autoLeaveDropdowns, setAutoLeaveDropdowns] = useState<{ [robot: number]: string }>({
         1: "Unknown",
@@ -42,9 +44,12 @@ export default function App() {
         3: "Unknown"
     });
 
-    const [netCount, setNetCount] = useState(0);
-    const [processorCount, setProcessorCount] = useState(0);
-    const [throughCount, setThroughCount] = useState(0);
+    const [netCountAuto, setNetCountAuto] = useState(0);
+    const [netCountTeleop, setNetCountTeleop] = useState(0);
+    const [processorCountAuto, setProcessorCountAuto] = useState(0);
+    const [processorCountTeleop, setProcessorCountTeleop] = useState(0);
+    const [throughCountAuto, setThroughCountAuto] = useState(0);
+    const [throughCountTeleop, setThroughCountTeleop] = useState(0);
 
     type FoulType = typeof FOULS[number];
     type PenaltyType = typeof PENALTIES[number];
@@ -74,56 +79,64 @@ export default function App() {
         });
     }
 
-    const scoringHandlers: Record<ScoringType, { onPlus: () => void; onMinus: () => void; }> = {
+    const scoringHandlers: Record<ScoringType, { onPlus: (auto: boolean) => void; onMinus: (auto: boolean) => void; }> = {
         Net: {
-            onPlus: () => {
-                setNetCount((c) => c + 1);
+            onPlus: (auto: boolean) => {
+                (auto ? setNetCountAuto : setNetCountTeleop)((c) => c + 1);
                 socket.emit("score.algae.net:add", {
                     alliance: allianceNet,
+                    auto: auto,
                     count: 1,
                 });
             },
-            onMinus: () => {
-                setNetCount((c) => Math.max(0, c - 1));
-                if (!(netCount <= 0)) {
+            onMinus: (auto: boolean) => {
+                (auto ? setNetCountAuto : setNetCountTeleop)((c) => Math.max(0, c - 1));
+                if (!((auto ? netCountAuto : netCountTeleop) <= 0)) {
                     socket.emit("score.algae.net:remove", {
                         alliance: allianceNet,
+                        auto: auto,
                         count: 1,
                     });
                 }
             },
         },
         Processor: {
-            onPlus: () => {
-                setProcessorCount((c) => c + 1);
+            onPlus: (auto: boolean) => {
+                (auto ? setProcessorCountAuto : setProcessorCountTeleop)((c) => c + 1);
+
                 socket.emit("score.algae.processor:add", {
                     alliance: allianceProcessor,
+                    auto: auto,
                     count: 1,
                 });
             },
-            onMinus: () => {
-                setProcessorCount((c) => Math.max(0, c - 1));
-                if (!(processorCount <= 0)) {
+            onMinus: (auto: boolean) => {
+                (auto ? setProcessorCountAuto : setProcessorCountTeleop)((c) => Math.max(0, c - 1));
+
+                if (!((auto ? processorCountAuto : processorCountTeleop) <= 0)) {
                     socket.emit("score.algae.processor:remove", {
                         alliance: allianceProcessor,
+                        auto: auto,
                         count: 1,
                     });
                 }
             },
         },
         Through: {
-            onPlus: () => {
-                setThroughCount((c) => c + 1);
+            onPlus: (auto: boolean) => {
+                (auto ? setThroughCountAuto : setThroughCountTeleop)((c) => c + 1);
                 socket.emit("score.coral.through:add", {
                     alliance: allianceThrough,
+                    auto: auto,
                     count: 1,
                 });
             },
-            onMinus: () => {
-                setThroughCount((c) => Math.max(0, c - 1));
-                if (!(throughCount <= 0)) {
+            onMinus: (auto: boolean) => {
+                (auto ? setThroughCountAuto : setThroughCountTeleop)((c) => Math.max(0, c - 1));
+                if (!((auto ? throughCountAuto : throughCountTeleop) <= 0)) {
                     socket.emit("score.coral.through:remove", {
                         alliance: allianceThrough,
+                        auto: auto,
                         count: 1,
                     });
                 }
@@ -131,21 +144,25 @@ export default function App() {
         }
     };
 
-    function reefHandler(level: "l4" | "l3" | "l2", branch: "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l", value: boolean) {
-        setReefCheckboxes(prev => ({
-            ...prev,
-            [`${level}-${branch}`]: value
-        }));
+    function reefHandler(auto: boolean, level: "l4" | "l3" | "l2", branch: "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l", value: boolean) {
+        (auto ? setReefCheckboxesAuto : setReefCheckboxesTeleop)(
+            prev => ({
+                ...prev,
+                [`${level}-${branch}`]: value
+            })
+        );
 
         if (value) {
             socket.emit("score.coral:add", {
                 alliance: allianceReef,
+                auto: auto,
                 level,
                 branch,
             });
         } else {
             socket.emit("score.coral:remove", {
                 alliance: allianceReef,
+                auto: auto,
                 level,
                 branch,
             });
@@ -277,16 +294,20 @@ export default function App() {
 
         socket.on("match:reset", () => {
             setMatchStatus("⏳ Awaiting...");
-            setNetCount(0);
-            setProcessorCount(0);
-            setThroughCount(0);
+            setNetCountAuto(0);
+            setNetCountTeleop(0);
+            setProcessorCountAuto(0);
+            setProcessorCountTeleop(0);
+            setThroughCountAuto(0);
+            setThroughCountTeleop(0);
             setMinorFoulCountRed(0);
             setMajorFoulCountRed(0);
             setAdjustmentFoulCountRed(0);
             setMinorFoulCountBlue(0);
             setMajorFoulCountBlue(0);
             setAdjustmentFoulCountBlue(0);
-            setReefCheckboxes(initialReefCheckboxes);
+            setReefCheckboxesAuto(initialReefCheckboxes);
+            setReefCheckboxesTeleop(initialReefCheckboxes);
             setAutoLeaveDropdowns({1: "Unknown", 2: "Unknown", 3: "Unknown"});
             setEndgameDropdowns({1: "Unknown", 2: "Unknown", 3: "Unknown"});
 
@@ -297,18 +318,29 @@ export default function App() {
         };
     }, [initialReefCheckboxes]);
 
+    const flashCoreContainer = useFlashOnChange(matchStatus.toLowerCase().includes("in progress"));
+
     return (<div>
         <StatusBar status={connected ? "Connected 🟢" : "Disconnected 🔴"} alliance={"Manual mode"} matchStatus={matchStatus} />
-
-        <div className="core_container">
+        {matchStatus.toLowerCase().includes("awaiting") && (
+            <div className="overlay">
+                <div className="overlay-content">
+                    <h2>Waiting for match to start...</h2>
+                    <p>Please wait until the match starts to begin scoring</p>
+                </div>
+            </div>
+        )}
+        <div className="core_container" ref={flashCoreContainer}>
             {/* FIRST ROW */}
-            <div className="container_row" style={{height: "11rem"}}>
+            <div className="container_row" style={{height: "8.8rem"}}>
+                <div className="container_col" style={{height: "100%"}}>
+                    <h2>🤖 AUTO</h2>
+                </div>
                 <div className="container_col">
-                    <h2>🤖 AUTONOMOUS</h2>
                     <table>
                         <thead>
                         <tr>
-                            <th>Robot #</th>
+                            <th>#</th>
                             <th>Leave?</th>
                         </tr>
                         </thead>
@@ -326,25 +358,290 @@ export default function App() {
                                 </select>
                             </td>
                         </tr>))}
+                        </tbody>
+                    </table>
+                    <AllianceToggle
+                        alliance={allianceAuto}
+                        checked={allianceAuto === "red"}
+                        onChange={() => allianceAuto === "blue" ? setAllianceAuto("red") : setAllianceAuto("blue")}
+                        label="" />
+                </div>
+                <div className="container_col">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>🪸</th>
+                            {BRANCHES.map((branch) => (
+                                <th key={branch}>{branch.toUpperCase()}</th>
+                            ))}
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {LEVELS.map((level) => (
+                            <tr key={level}>
+                                <td>{level.toUpperCase()}</td>
+                                {BRANCHES.map((branch) => (
+                                    <td key={`${level}-${branch}-true`}>
+                                        <input
+                                            className="scale"
+                                            type="checkbox"
+                                            checked={reefCheckboxesAuto[`${level}-${branch}`] || false}
+                                            onChange={event => reefHandler(true, level, branch, event.target.checked)}
+                                        />
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                    <AllianceToggle
+                        alliance={allianceReef}
+                        checked={allianceReef === "red"}
+                        onChange={() => allianceReef === "blue" ? setAllianceReef("red") : setAllianceReef("blue")}
+                        label="" />
+                </div>
+                <div className="container_col">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Net</th>
+                            <th>Processor</th>
+                            <th>L1</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>
+                                <PlusMinusButton
+                                    onPlus={() => scoringHandlers.Through.onPlus(false)}
+                                    onMinus={() => scoringHandlers.Through.onMinus(false)}
+                                />
+                            </td>
+                            <td>
+                                <PlusMinusButton
+                                    onPlus={() => scoringHandlers.Processor.onPlus(false)}
+                                    onMinus={() => scoringHandlers.Processor.onMinus(false)}
+                                />
+                            </td>
+                            <td>
+                                <PlusMinusButton
+                                    onPlus={() => scoringHandlers.Net.onPlus(false)}
+                                    onMinus={() => scoringHandlers.Net.onMinus(false)}
+                                />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                <p>{netCountAuto}</p>
+                            </th>
+                            <th>
+                                <p>{processorCountAuto}</p>
+                            </th>
+                            <th>
+                                <p>{throughCountAuto}</p>
+                            </th>
+                        </tr>
                         <tr>
                             <td>
                                 <AllianceToggle
-                                    alliance={allianceAuto}
-                                    checked={allianceAuto === "red"}
-                                    onChange={() => allianceAuto === "blue" ? setAllianceAuto("red") : setAllianceAuto("blue")}
+                                    alliance={allianceThrough}
+                                    checked={allianceThrough === "red"}
+                                    onChange={() => allianceThrough === "blue" ? setAllianceThrough("red") : setAllianceThrough("blue")}
+                                    label="" />
+                            </td>
+                            <td>
+                                <AllianceToggle
+                                    alliance={allianceProcessor}
+                                    checked={allianceProcessor === "red"}
+                                    onChange={() => allianceProcessor === "blue" ? setAllianceProcessor("red") : setAllianceProcessor("blue")}
+                                    label="" />
+                            </td>
+                            <td>
+                                <AllianceToggle
+                                    alliance={allianceNet}
+                                    checked={allianceNet === "red"}
+                                    onChange={() => allianceNet === "blue" ? setAllianceNet("red") : setAllianceNet("blue")}
                                     label="" />
                             </td>
                         </tr>
                         </tbody>
                     </table>
                 </div>
-                <div className="hr_vert" />
+            </div>
+
+            <div className="hr_horiz" />
+
+            {/* SECOND ROW */}
+            <div className="container_row" style={{height: "8.8rem"}}>
+                <div className="container_col" style={{height: "100%"}}>
+                    <h2>🎮 TELEOP</h2>
+                </div>
+                <div className="container_col">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>🪸</th>
+                            {BRANCHES.map((branch) => (
+                                <th key={branch}>{branch.toUpperCase()}</th>
+                            ))}
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {LEVELS.map((level) => (
+                            <tr key={level}>
+                                <td>{level.toUpperCase()}</td>
+                                {BRANCHES.map((branch) => (
+                                    <td key={`${level}-${branch}-false`}>
+                                        <input
+                                            className="scale"
+                                            type="checkbox"
+                                            checked={reefCheckboxesTeleop[`${level}-${branch}`] || false}
+                                            onChange={event => reefHandler(false, level, branch, event.target.checked)}
+                                        />
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                    <AllianceToggle
+                        alliance={allianceReef}
+                        checked={allianceReef === "red"}
+                        onChange={() => allianceReef === "blue" ? setAllianceReef("red") : setAllianceReef("blue")}
+                        label="" />
+                </div>
+                <div className="container_col">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>L1</th>
+                            <th>Processor</th>
+                            <th>Net</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>
+                                <PlusMinusButton
+                                    onPlus={() => scoringHandlers.Through.onPlus(false)}
+                                    onMinus={() => scoringHandlers.Through.onMinus(false)}
+                                />
+                            </td>
+                            <td>
+                                <PlusMinusButton
+                                    onPlus={() => scoringHandlers.Processor.onPlus(false)}
+                                    onMinus={() => scoringHandlers.Processor.onMinus(false)}
+                                />
+                            </td>
+                            <td>
+                                <PlusMinusButton
+                                    onPlus={() => scoringHandlers.Net.onPlus(false)}
+                                    onMinus={() => scoringHandlers.Net.onMinus(false)}
+                                />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                <p>{netCountTeleop}</p>
+                            </th>
+                            <th>
+                                <p>{processorCountTeleop}</p>
+                            </th>
+                            <th>
+                                <p>{throughCountTeleop}</p>
+                            </th>
+                        </tr>
+                        <tr>
+                            <td>
+                                <AllianceToggle
+                                    alliance={allianceThrough}
+                                    checked={allianceThrough === "red"}
+                                    onChange={() => allianceThrough === "blue" ? setAllianceThrough("red") : setAllianceThrough("blue")}
+                                    label="" />
+                            </td>
+                            <td>
+                                <AllianceToggle
+                                    alliance={allianceProcessor}
+                                    checked={allianceProcessor === "red"}
+                                    onChange={() => allianceProcessor === "blue" ? setAllianceProcessor("red") : setAllianceProcessor("blue")}
+                                    label="" />
+                            </td>
+                            <td>
+                                <AllianceToggle
+                                    alliance={allianceNet}
+                                    checked={allianceNet === "red"}
+                                    onChange={() => allianceNet === "blue" ? setAllianceNet("red") : setAllianceNet("blue")}
+                                    label="" />
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div className="container_col">
+                    <h4>Robot team numbers</h4>
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Blue</th>
+                            <th>Red</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>
+                                1
+                            </td>
+                            <td>
+                                {/* BLUE 1 */}
+                                0000
+                            </td>
+                            <td>
+                                {/* RED 1 */}
+                                0000
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                2
+                            </td>
+                            <td>
+                                {/* BLUE 2 */}
+                                0000
+                            </td>
+                            <td>
+                                {/* RED 2 */}
+                                0000
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                3
+                            </td>
+                            <td>
+                                {/* BLUE 3 */}
+                                0000
+                            </td>
+                            <td>
+                                {/* RED 3 */}
+                                0000
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div className="hr_horiz" />
+
+            {/*THIRD ROW*/}
+            <div className="container_row" style={{height: "10.5rem"}}>
                 <div className="container_col">
                     <h2>⌛ ENDGAME</h2>
                     <table>
                         <thead>
                         <tr>
-                            <th>Robot #</th>
+                            <th>#</th>
                             <th>Position</th>
                         </tr>
                         </thead>
@@ -362,21 +659,17 @@ export default function App() {
                                 </select>
                             </td>
                         </tr>))}
-                        <tr>
-                            <td>
-                                <AllianceToggle
-                                    alliance={allianceEndgame}
-                                    checked={allianceEndgame === "red"}
-                                    onChange={() => allianceEndgame === "blue" ? setAllianceEndgame("red") : setAllianceEndgame("blue")}
-                                    label="" />
-                            </td>
-                        </tr>
                         </tbody>
                     </table>
+                    <AllianceToggle
+                        alliance={allianceEndgame}
+                        checked={allianceEndgame === "red"}
+                        onChange={() => allianceEndgame === "blue" ? setAllianceEndgame("red") : setAllianceEndgame("blue")}
+                        label="" />
                 </div>
                 <div className="hr_vert" />
                 <div className="container_col">
-                    <h2>🟦 FOULS BLUE</h2>
+                    <h3>🟦 FOULS BLUE</h3>
                     <table>
                         <thead>
                         <tr>
@@ -405,7 +698,7 @@ export default function App() {
                     </table>
                 </div>
                 <div className="container_col">
-                    <h2>🟥 FOULS RED</h2>
+                    <h3>🟥 FOULS RED</h3>
                     <table>
                         <thead>
                         <tr>
@@ -433,188 +726,29 @@ export default function App() {
                         ))}</tbody>
                     </table>
                 </div>
-            </div>
-
-            <div className="hr_horiz" />
-
-            {/* SECOND ROW */}
-            <div className="container_row">
+                <div className="hr_vert" />
                 <div className="container_col">
+                    <h3>🏁 PENALTIES</h3>
+
                     <table>
-                        <thead>
-                        <tr>
-                            <th>Branch</th>
-                            {BRANCHES.map((branch) => (
-                                <th key={branch}>{branch.toUpperCase()}</th>
-                            ))}
-                        </tr>
-                        </thead>
                         <tbody>
-                        {LEVELS.map((level) => (
-                            <tr key={level}>
-                                <td>{level.toUpperCase()}</td>
-                                {BRANCHES.map((branch) => (
-                                    <td key={`${level}-${branch}`}>
-                                        <input
-                                            className="scale"
-                                            type="checkbox"
-                                            checked={reefCheckboxes[`${level}-${branch}`] || false}
-                                            onChange={event => reefHandler(level, branch, event.target.checked)}
-                                        />
-                                    </td>
-                                ))}
+                        {PENALTIES.map((penalty) => (
+                            <tr key={penalty}>
+                                <td>{penalty.toUpperCase()}</td>
+                                <td>
+                                    <input
+                                        className="scale"
+                                        type="checkbox"
+                                        onChange={(event) => handlePenaltyChange(penalty, event.target.checked)}
+                                    />
+                                </td>
                             </tr>
                         ))}
-                        <tr>
-                            <td>
-                                <AllianceToggle
-                                    alliance={allianceReef}
-                                    checked={allianceReef === "red"}
-                                    onChange={() => allianceReef === "blue" ? setAllianceReef("red") : setAllianceReef("blue")}
-                                    label="" />
-                            </td>
-                        </tr>
                         </tbody>
                     </table>
                 </div>
-                <div className="container_col">
-                    <table>
-                        <thead>
-                        <tr>
-                            <th>Net</th>
-                            <th>Processor</th>
-                            <th>L1</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td>
-                                <PlusMinusButton
-                                    onPlus={() => scoringHandlers.Net.onPlus()}
-                                    onMinus={() => scoringHandlers.Net.onMinus()}
-                                />
-                            </td>
-                            <td>
-                                <PlusMinusButton
-                                    onPlus={() => scoringHandlers.Processor.onPlus()}
-                                    onMinus={() => scoringHandlers.Processor.onMinus()}
-                                />
-                            </td>
-                            <td>
-                                <PlusMinusButton
-                                    onPlus={() => scoringHandlers.Through.onPlus()}
-                                    onMinus={() => scoringHandlers.Through.onMinus()}
-                                />
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>
-                                <p>{netCount}</p>
-                            </th>
-                            <th>
-                                <p>{processorCount}</p>
-                            </th>
-                            <th>
-                                <p>{throughCount}</p>
-                            </th>
-                        </tr>
-                        <tr>
-                            <th>
-                                <AllianceToggle
-                                    alliance={allianceNet}
-                                    checked={allianceNet === "red"}
-                                    onChange={() => allianceNet === "blue" ? setAllianceNet("red") : setAllianceNet("blue")}
-                                    label="" />
-                            </th>
-                            <th>
-                                <AllianceToggle
-                                    alliance={allianceProcessor}
-                                    checked={allianceProcessor === "red"}
-                                    onChange={() => allianceProcessor === "blue" ? setAllianceProcessor("red") : setAllianceProcessor("blue")}
-                                    label="" />
-                            </th>
-                            <th>
-                                <AllianceToggle
-                                    alliance={allianceThrough}
-                                    checked={allianceThrough === "red"}
-                                    onChange={() => allianceThrough === "blue" ? setAllianceThrough("red") : setAllianceThrough("blue")}
-                                    label="" />
-                            </th>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div className="container_col">
-                    <h4>Robot team numbers</h4>
-                    <table>
-                        <thead>
-                        <tr>
-                            <th>Id</th>
-                            <th>Team number</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td>
-                                1
-                            </td>
-                            <td>
-                                0000
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                2
-                            </td>
-                            <td>
-                                0000
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                3
-                            </td>
-                            <td>
-                                0000
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
+
             </div>
-
-            {/*<div className="hr_horiz" />*/}
-
-            {/* THIRD ROW */}
-            {/*<div className="container_row" style={{height: "12.5rem"}}>*/}
-            {/*    <div className="container_col">*/}
-            {/*        <h2>🏁 PENALTIES</h2>*/}
-
-            {/*        <table>*/}
-            {/*            <thead>*/}
-            {/*            <tr>*/}
-            {/*                <th>Penalty</th>*/}
-            {/*                <th>Effect</th>*/}
-            {/*            </tr>*/}
-            {/*            </thead>*/}
-            {/*            <tbody>*/}
-            {/*            {PENALTIES.map((penalty) => (*/}
-            {/*                <tr key={penalty}>*/}
-            {/*                    <td>{penalty.toUpperCase()}</td>*/}
-            {/*                    <td>*/}
-            {/*                        <input*/}
-            {/*                            className="scale"*/}
-            {/*                            type="checkbox"*/}
-            {/*                            onChange={(event) => handlePenaltyChange(penalty, event.target.checked)}*/}
-            {/*                        />*/}
-            {/*                    </td>*/}
-            {/*                </tr>*/}
-            {/*            ))}*/}
-            {/*            </tbody>*/}
-            {/*        </table>*/}
-            {/*    </div>*/}
-
-            {/*</div>*/}
         </div>
         <div className="copyright">
             <p>© Developed by Jerry Fu 2025-{new Date().getFullYear()}</p>
