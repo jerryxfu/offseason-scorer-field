@@ -33,18 +33,22 @@ export interface ClientToServerEvents {
 
     "score.algae.net:add": (data: {
         alliance: "red" | "blue";
+        auto: boolean;
         count: number;
     }) => void;
     "score.algae.net:remove": (data: {
         alliance: "red" | "blue";
+        auto: boolean;
         count: number;
     }) => void;
     "score.algae.processor:add": (data: {
         alliance: "red" | "blue";
+        auto: boolean;
         count: number;
     }) => void;
     "score.algae.processor:remove": (data: {
         alliance: "red" | "blue";
+        auto: boolean;
         count: number;
     }) => void;
 
