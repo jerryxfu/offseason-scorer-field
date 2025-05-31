@@ -413,20 +413,20 @@ export default function App() {
                         <tr>
                             <td>
                                 <PlusMinusButton
-                                    onPlus={() => scoringHandlers.Through.onPlus(false)}
-                                    onMinus={() => scoringHandlers.Through.onMinus(false)}
+                                    onPlus={() => scoringHandlers.Through.onPlus(true)}
+                                    onMinus={() => scoringHandlers.Through.onMinus(true)}
                                 />
                             </td>
                             <td>
                                 <PlusMinusButton
-                                    onPlus={() => scoringHandlers.Processor.onPlus(false)}
-                                    onMinus={() => scoringHandlers.Processor.onMinus(false)}
+                                    onPlus={() => scoringHandlers.Processor.onPlus(true)}
+                                    onMinus={() => scoringHandlers.Processor.onMinus(true)}
                                 />
                             </td>
                             <td>
                                 <PlusMinusButton
-                                    onPlus={() => scoringHandlers.Net.onPlus(false)}
-                                    onMinus={() => scoringHandlers.Net.onMinus(false)}
+                                    onPlus={() => scoringHandlers.Net.onPlus(true)}
+                                    onMinus={() => scoringHandlers.Net.onMinus(true)}
                                 />
                             </td>
                         </tr>
