@@ -404,9 +404,9 @@ export default function App() {
                     <table>
                         <thead>
                         <tr>
-                            <th>Net</th>
-                            <th>Processor</th>
                             <th>L1</th>
+                            <th>Processor</th>
+                            <th>Net</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -432,13 +432,13 @@ export default function App() {
                         </tr>
                         <tr>
                             <th>
-                                <p>{netCountAuto}</p>
+                                <p>{throughCountAuto}</p>
                             </th>
                             <th>
                                 <p>{processorCountAuto}</p>
                             </th>
                             <th>
-                                <p>{throughCountAuto}</p>
+                                <p>{netCountAuto}</p>
                             </th>
                         </tr>
                         <tr>
@@ -542,13 +542,13 @@ export default function App() {
                         </tr>
                         <tr>
                             <th>
-                                <p>{netCountTeleop}</p>
+                                <p>{throughCountTeleop}</p>
                             </th>
                             <th>
                                 <p>{processorCountTeleop}</p>
                             </th>
                             <th>
-                                <p>{throughCountTeleop}</p>
+                                <p>{netCountTeleop}</p>
                             </th>
                         </tr>
                         <tr>
